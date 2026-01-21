@@ -1,10 +1,66 @@
+:root {
+    --bs-primary: #2eb82e!important;
+}
+
+#root {
+  min-height: 100vh;
+  background-color: #ffffff;
+}
+
 body {
+    font-size: 16px;
     margin: 0;
     padding: 0;
 }
+
+/* Bootstrap Classes */
+
+.form-control:focus {
+    border-color: var(--bs-primary)!important;
+    box-shadow: 0 0 0 .25rem rgba(46, 184, 46, 0.25)!important;
+}
+.text-primary {
+    color: var(--bs-primary)!important;
+}
+.btn-primary {
+    background-color: #2eb82e !important;
+    border-color: #2eb82e !important;
+}
+.btn-primary:hover {
+    background-color: #28a428 !important;
+    border-color: #28a428 !important;
+}
+
+
 
 .container,
 .container-fluid {
     align-items: flex-start !important;
     justify-content: flex-start !important;
+}
+
+/* Login */
+
+.loginContainer {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 448px;
+    padding: 2rem;
+    background: #FFFFFF;
+    border-radius: 10px;
+    box-shadow: 0px 0px 2px #171a1f14, 0px 4px 7px #171a1f21;
+}
+
+@media (max-width: 576px) {
+    .loginContainer {
+        width: 95%;
+        padding: 1.5rem;
+    }
+}
+
+.loginContainer label {
+    margin-bottom: 0.2rem;
 }
