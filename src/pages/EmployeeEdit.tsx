@@ -1,5 +1,5 @@
 import { Layout } from "../components/Layout";
-import { EmployeeForm } from "../components/EmployeeForm";
+import { EmployeeForm } from "./EmployeeForm";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";

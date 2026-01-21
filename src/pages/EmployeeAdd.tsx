@@ -1,5 +1,5 @@
 import { Layout } from "../components/Layout";
-import { EmployeeForm } from "../components/EmployeeForm";
+import { EmployeeForm } from "./EmployeeForm";
 import { useNavigate } from "react-router-dom";
 
 interface EmployeeFormData {
