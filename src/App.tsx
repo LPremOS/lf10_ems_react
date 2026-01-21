@@ -1,27 +1,26 @@
 import './App.css'
 import {Route, Routes, Navigate} from "react-router-dom";
 import {UnsecuredFoo} from "./pages/UnsecuredFoo.tsx";
-import {SecuredBar} from "./pages/SecuredBar.tsx";
 import RequireAuth from "./auth/RequireAuth.tsx";
 import {EmployeeTable} from "./pages/EmployeeTable.tsx";
-import {EmployeeDetails} from "./pages/EmployeeDetails.tsx";
-import {EmployeeAdd} from "./pages/EmployeeAdd.tsx";
-import {EmployeeEdit} from "./pages/EmployeeEdit.tsx";
+import Dashboard from './pages/Dashboard';
+import { Layout } from './components/Layout';
+import {SecuredBar} from "./pages/SecuredBar.tsx";
 
 function App() {
     return (
         <Routes>
-            <Route path="/" element={<Navigate to="/employees" replace />}/>
-            <Route path="/foo" element={<UnsecuredFoo/>}/>
+            <Route path="/" element={<Navigate to="/dashboard" replace />}/>
+            <Route path="/dashboard" element={<Layout><Dashboard/></Layout>}/>
+            <Route path="/foo" element={<Layout><UnsecuredFoo/></Layout>}/>
             <Route path="/bar" element={
-                <RequireAuth>
-                    <SecuredBar/>
-                </RequireAuth>
+                <Layout>
+                  <RequireAuth>
+                      <SecuredBar/>
+                  </RequireAuth>
+                </Layout>
             }/>
-            <Route path="/employees" element={<EmployeeTable/>}/>
-            <Route path="/employees/new" element={<EmployeeAdd/>}/>
-            <Route path="/employees/:id" element={<EmployeeDetails/>}/>
-            <Route path="/employees/:id/edit" element={<EmployeeEdit/>}/>
+            <Route path="/employees" element={<Layout><EmployeeTable/></Layout>}/>
         </Routes>
     )
 }
