@@ -6,6 +6,8 @@ import {SecuredBar} from "./pages/SecuredBar.tsx";
 import {Home} from "./pages/Home.tsx";
 import RequireAuth from "./auth/RequireAuth.tsx";
 import {EmployeeTable} from "./pages/EmployeeTable.tsx";
+import Footer from './components/Footer.tsx';
+import Dashboard from './pages/Dashboard';
 
 function App() {
 
@@ -14,8 +16,7 @@ function App() {
         <Container>
             <Navbar bg="light" expand="lg">
                 <Container>
-                    <Navbar.Brand href="#home">React-Bootstrap</Navbar.Brand>
-                    <Navbar.Toggle aria-controls="basic-navbar-nav"/>
+                    <Navbar.Brand as={Link} to="/">Dashboard</Navbar.Brand>                    <Navbar.Toggle aria-controls="basic-navbar-nav"/>
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
                             <Nav.Link as={Link} to="/foo">Foo</Nav.Link>
@@ -26,7 +27,7 @@ function App() {
                 </Container>
             </Navbar>
             <Routes>
-                <Route path="/" element={<Home/>}/>
+                <Route path="/" element={<Dashboard/>}/>
                 <Route path="/foo" element={<UnsecuredFoo/>}/>
                 <Route path="/bar" element={
                     <RequireAuth>
@@ -39,6 +40,8 @@ function App() {
                     </RequireAuth>
                 }/>
             </Routes>
+        <Footer>
+        </Footer>
         </Container>
     )
 }
