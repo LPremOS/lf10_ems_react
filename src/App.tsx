@@ -4,24 +4,26 @@ import {UnsecuredFoo} from "./pages/UnsecuredFoo.tsx";
 import { AppLayout } from "./components/layout/AppLayout";
 import RequireAuth from "./auth/RequireAuth.tsx";
 import {EmployeeTable} from "./pages/EmployeeTable.tsx";
+import Footer from './components/Footer.tsx';
+import Dashboard from './pages/Dashboard';
+import { Layout } from './components/Layout';
 import {SecuredBar} from "./pages/SecuredBar.tsx";
 import {Home} from "./pages/Home.tsx";
 
 function App() {
     return (
         <Routes>
-            <Route element={<AppLayout />}>
-                <Route path="/" element={<Navigate to="/employees" replace />}/>
-                <Route path="/dashboard" element={<Home />}/>
-                <Route path="/employees" element={<EmployeeTable/>}/>
-                <Route path="/qualifications" element={<div>Qualifikationen (Coming Soon)</div>}/>
-                <Route path="/foo" element={<UnsecuredFoo/>}/>
-                <Route path="/bar" element={
-                    <RequireAuth>
-                        <SecuredBar/>
-                    </RequireAuth>
-                }/>
-            </Route>
+            <Route path="/" element={<Navigate to="/dashboard" replace />}/>
+            <Route path="/dashboard" element={<Layout><Dashboard/></Layout>}/>
+            <Route path="/foo" element={<Layout><UnsecuredFoo/></Layout>}/>
+            <Route path="/bar" element={
+                <Layout>
+                  <RequireAuth>
+                      <SecuredBar/>
+                  </RequireAuth>
+                </Layout>
+            }/>
+            <Route path="/employees" element={<Layout><EmployeeTable/></Layout>}/>
         </Routes>
     )
 }
