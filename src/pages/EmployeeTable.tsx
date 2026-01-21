@@ -19,6 +19,8 @@ export function EmployeeTable() {
         return <div> {error}</div>;
     }
 
+    console.log(employees);
+
     return (
         <Container>
             <Button onClick={handleLoadEmployees}>
