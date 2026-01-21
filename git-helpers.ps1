@@ -31,12 +31,18 @@ function Start-Feature {
     # Feature Branch erstellen
     git checkout -b "feature/$SafeName"
 
-    # Branch zu Remote pushen
+    # Branch zu Remote pushen - verwende HEAD: um Encoding-Probleme zu vermeiden
     Write-Host "Pushe Branch zu Remote..." -ForegroundColor Cyan
-    git push -u origin "feature/$SafeName"
+    git push -u origin "HEAD:feature/$SafeName"
 
-    Write-Host "Feature Branch 'feature/$SafeName' erstellt und aktiv" -ForegroundColor Green
-    Write-Host "Branch ist jetzt auch auf GitHub sichtbar" -ForegroundColor Green
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Feature Branch 'feature/$SafeName' erstellt und aktiv" -ForegroundColor Green
+        Write-Host "Branch ist jetzt auch auf GitHub sichtbar" -ForegroundColor Green
+    } else {
+        Write-Host "WARNUNG: Branch lokal erstellt, aber Push fehlgeschlagen" -ForegroundColor Yellow
+        Write-Host "Du kannst spaeter manuell pushen mit: git push -u origin HEAD:feature/$SafeName" -ForegroundColor Gray
+    }
+
     Write-Host "Tipp: Committe regelmaessig mit 'git commit -m ""feat($SafeName): ...""'" -ForegroundColor Yellow
 }
 
