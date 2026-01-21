@@ -1,48 +1,28 @@
 import './App.css'
-import {Container, Nav, Navbar} from "react-bootstrap";
-import {Link, Route, Routes} from "react-router-dom";
+import {Route, Routes, Navigate} from "react-router-dom";
 import {UnsecuredFoo} from "./pages/UnsecuredFoo.tsx";
 import {SecuredBar} from "./pages/SecuredBar.tsx";
-import {Home} from "./pages/Home.tsx";
 import RequireAuth from "./auth/RequireAuth.tsx";
 import {EmployeeTable} from "./pages/EmployeeTable.tsx";
 import Footer from './components/Footer.tsx';
 import Dashboard from './pages/Dashboard';
+import { Layout } from './components/Layout';
 
 function App() {
-
-
     return (
-        <Container>
-            <Navbar bg="light" expand="lg">
-                <Container>
-                    <Navbar.Brand as={Link} to="/">Dashboard</Navbar.Brand>                    <Navbar.Toggle aria-controls="basic-navbar-nav"/>
-                    <Navbar.Collapse id="basic-navbar-nav">
-                        <Nav className="me-auto">
-                            <Nav.Link as={Link} to="/foo">Foo</Nav.Link>
-                            <Nav.Link as={Link} to="/bar">Bar</Nav.Link>
-                            <Nav.Link as={Link} to="/employees">Mitarbeiter</Nav.Link>
-                        </Nav>
-                    </Navbar.Collapse>
-                </Container>
-            </Navbar>
-            <Routes>
-                <Route path="/" element={<Dashboard/>}/>
-                <Route path="/foo" element={<UnsecuredFoo/>}/>
-                <Route path="/bar" element={
-                    <RequireAuth>
-                        <SecuredBar/>
-                    </RequireAuth>
-                }/>
-                <Route path="/employees" element={
-                    <RequireAuth>
-                        <EmployeeTable/>
-                    </RequireAuth>
-                }/>
-            </Routes>
-        <Footer>
-        </Footer>
-        </Container>
+        <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />}/>
+            <Route path="/dashboard" element={<Layout><Dashboard/></Layout>}/>
+            <Route path="/foo" element={<Layout><UnsecuredFoo/></Layout>}/>
+            <Route path="/bar" element={
+                <Layout>
+                  <RequireAuth>
+                      <SecuredBar/>
+                  </RequireAuth>
+                </Layout>
+            }/>
+            <Route path="/employees" element={<Layout><EmployeeTable/></Layout>}/>
+        </Routes>
     )
 }
 
