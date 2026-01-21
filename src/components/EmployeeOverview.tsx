@@ -1,35 +1,43 @@
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import './EmployeeOverview.css';
 
 export function EmployeeOverview() {
+  const navigate = useNavigate();
+
   // Mock Daten wie im Bild
   const employees = [
     {
+      id: '1',
       vorname: 'Anna',
       nachname: 'Müller',
       ort: 'Berlin',
       qualifikationen: ['Projektmanagement', 'Softwareentwicklung']
     },
     {
+      id: '2',
       vorname: 'Max',
       nachname: 'Schmidt',
       ort: 'München',
       qualifikationen: ['Datenanalyse', 'Cloud Computing']
     },
     {
+      id: '3',
       vorname: 'Lena',
       nachname: 'Meier',
       ort: 'Hamburg',
       qualifikationen: ['Projektmanagement', 'Marketing', 'Vertrieb']
     },
     {
+      id: '4',
       vorname: 'Paul',
       nachname: 'Wagner',
       ort: 'Frankfurt',
       qualifikationen: ['Softwareentwicklung', 'Cloud Computing']
     },
     {
+      id: '5',
       vorname: 'Sophie',
       nachname: 'Schneider',
       ort: 'Köln',
@@ -41,7 +49,12 @@ export function EmployeeOverview() {
     <div className="employee-overview">
       <div className="employee-header">
         <h1>Mitarbeiterübersicht</h1>
-        <button className="btn-new-employee">Neuen Mitarbeiter anlegen</button>
+        <button
+          className="btn-new-employee"
+          onClick={() => navigate('/employees/new')}
+        >
+          Neuen Mitarbeiter anlegen
+        </button>
       </div>
 
       <div className="filter-section">
@@ -99,13 +112,21 @@ export function EmployeeOverview() {
                 </td>
                 <td>
                   <div className="action-buttons">
-                    <button className="action-btn">
+                    <button
+                      className="action-btn"
+                      onClick={() => navigate(`/employees/${employee.id}`)}
+                      title="Mitarbeiter ansehen"
+                    >
                       <AiOutlineEye />
                     </button>
-                    <button className="action-btn">
+                    <button
+                      className="action-btn"
+                      onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                      title="Mitarbeiter bearbeiten"
+                    >
                       <AiOutlineEdit />
                     </button>
-                    <button className="action-btn action-btn-delete">
+                    <button className="action-btn action-btn-delete" title="Mitarbeiter löschen">
                       <AiOutlineDelete />
                     </button>
                   </div>
