@@ -8,6 +8,9 @@ import { useAuth } from 'react-oidc-context';
 import { Login } from './pages/Login.tsx';
 import { Callback } from './pages/Callback.tsx';
 import { Loader } from './components/common/Loader.tsx';
+import { EmployeeAdd } from './pages/EmployeeAdd.tsx';
+import { EmployeeEdit } from './pages/EmployeeEdit.tsx';
+import { EmployeeDetails } from './pages/EmployeeDetails.tsx';
 
 function App() {
     const auth = useAuth();
@@ -32,6 +35,9 @@ function App() {
                     <Route element={<AppLayout />}>
                         <Route path="/dashboard" element={<Dashboard/>}/>
                         <Route path="/employees" element={<EmployeeTable/>}/>
+                        <Route path="/employees/new" element={<EmployeeAdd/>}/>
+                        <Route path="/employees/:id" element={<EmployeeDetails/>}/>
+                        <Route path="/employees/:id/edit" element={<EmployeeEdit/>}/>
                         <Route path="/qualifications" element={<QualificationsOverview/>} />
                     </Route>
                 </>
