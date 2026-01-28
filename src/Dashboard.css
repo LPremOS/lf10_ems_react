@@ -58,3 +58,19 @@ body {
   font-weight: bold;
   color: var(--text);
 }
+
+/* wenn es wenig Platz geben sollte die Karten werden umbrechen */
+.dashboard-cards-row,
+.dashboard-quicklinks-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap; 
+}
+
+/* passt die große der fenster an*/
+.dashboard-card,
+.dashboard-quicklink-card {
+  flex: 1 1 250px; 
+  min-width: 220px;
+  max-width: 100%;
+}
