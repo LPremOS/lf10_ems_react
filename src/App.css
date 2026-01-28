@@ -64,3 +64,11 @@ body {
 .loginContainer label {
     margin-bottom: 0.2rem;
 }
+
+/* Qualifikationen */
+
+.qualificationList {
+    max-height: 365px;
+    overflow-y: scroll;
+    overflow-x: hidden;   
+}
