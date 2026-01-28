@@ -1,4 +1,4 @@
-import { EmployeeOverview } from "../components/EmployeeOverview";
+import { EmployeeOverview } from "./EmployeeOverview";
 
 export function EmployeeTable() {
     return (

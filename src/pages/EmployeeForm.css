@@ -1,0 +1,252 @@
+/* Page background like in the screenshot (soft gray) */
+.employee-form-page {
+  min-height: 100vh;
+  background: #f6f7fb;
+  padding: 28px 24px;
+}
+
+/* Centered content area */
+.employee-form-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* Title */
+.page-title {
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #111827;
+  margin: 6px 0 18px 0;
+}
+
+/* Form spacing */
+.employee-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Card style */
+.card {
+  background: #ffffff;
+  border: 1px solid #eef0f4;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 1px 0 rgba(16, 24, 40, 0.02);
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 18px 0;
+}
+
+/* Subsections in card */
+.subsection {
+  margin-top: 14px;
+}
+
+.subsection-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 14px 0 10px 0;
+}
+
+.hint {
+  margin: 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+/* 12-column grid to match screenshot layout */
+.grid-12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 14px 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Column spans */
+.span-2 { grid-column: span 2; }
+.span-3 { grid-column: span 3; }
+.span-4 { grid-column: span 4; }
+.span-5 { grid-column: span 5; }
+
+/* Inputs */
+.field input,
+.select {
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d9dde6;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field input:focus,
+.select:focus {
+  border-color: #8bb3ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* Qualification chips */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #e6e8ee;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.chip-text {
+  font-size: 15px;
+  color: #111827;
+  font-weight: 600;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: #ef4444;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.chip-remove:hover {
+  background: #fff1f2;
+}
+
+/* Add row (select + button) */
+.add-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-add {
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid #cfead8;
+  background: #8dd89a; /* light green like screenshot */
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.btn-add:hover {
+  filter: brightness(0.95);
+}
+
+.btn-add:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Bottom actions */
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+.btn-secondary {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid #d9dde6;
+  background: #ffffff;
+  color: #111827;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+}
+
+.btn-primary {
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 0;
+  background: #16a34a; /* green save button like screenshot */
+  color: #ffffff;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.btn-primary:hover {
+  filter: brightness(0.95);
+}
+
+/* Responsive: stack nicely on small screens */
+@media (max-width: 900px) {
+  .page-title {
+    font-size: 30px;
+  }
+
+  .grid-12 {
+    grid-template-columns: 1fr;
+  }
+
+  .span-2,
+  .span-3,
+  .span-4,
+  .span-5 {
+    grid-column: span 1;
+  }
+
+  .add-row {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-secondary,
+  .btn-primary {
+    width: 100%;
+  }
+}
