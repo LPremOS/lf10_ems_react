@@ -4,6 +4,8 @@ import {FiAward, FiHome, FiUsers, FiArrowRight, FiBriefcase} from "react-icons/f
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualifiactionApi } from "../hooks/useQualificationApi";
 import "./Dashboard.css";
+import { useNavigate } from "react-router-dom";
+import {FiAward, FiUsers, FiArrowRight} from "react-icons/fi";
 
 interface Employee {
   id: string;

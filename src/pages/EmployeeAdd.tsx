@@ -1,4 +1,3 @@
-import { Layout } from "../components/Layout";
 import { EmployeeForm } from "./EmployeeForm";
 import { useNavigate } from "react-router-dom";
 
@@ -25,9 +24,5 @@ export function EmployeeAdd() {
     navigate('/employees');
   };
 
-  return (
-    <Layout>
-      <EmployeeForm onSubmit={handleSubmit} />
-    </Layout>
-  );
+  return <EmployeeForm onSubmit={handleSubmit} />;
 }

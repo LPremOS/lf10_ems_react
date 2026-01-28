@@ -1,7 +1,7 @@
 import { Container } from "react-bootstrap";
 import { InputField } from "../components/common/InputField";
 import { SubmitButton } from "../components/common/SubmitButton";
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useAuth } from "react-oidc-context";
 
 export function Login() {

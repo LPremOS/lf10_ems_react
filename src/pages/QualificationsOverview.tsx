@@ -1,37 +1,62 @@
-import { useEffect, useState } from "react";
+
 import { Col, Row } from "react-bootstrap";
 import { AiOutlineDelete, AiOutlineEdit } from "react-icons/ai";
-import { useNavigate } from "react-router-dom"
 import { useDebounce } from "../hooks/useDebounce";
-import { useQualifiactionApi } from "../hooks/useQualificationApi";
-import { BarLoader } from "react-spinners";
 import { Loader } from "../components/common/Loader";
+import { useQualificationManagement } from "../hooks/useQualificationManagement";
+import { CustomModal } from "../components/common/Modal";
+import { InputField } from "../components/common/InputField";
+import { useState } from "react";
 
 export function QualificationsOverview() {
-    const navigate = useNavigate();
-    const {fetchQualifications, fetchQualificationById, loading, error} = useQualifiactionApi();
-    const [qualifications, setQualifications] = useState<any[]>([]);
     const [searchInput, setSearchInput] = useState("");
     const debouncedSearchInput = useDebounce(searchInput, 300);
-    const handleDelete = (id : string) => {
-        console.log(id);
-    }
 
-    useEffect(() => {
-        const loadQualifications = async () => {
-            const data = await fetchQualifications();
-            if (Array.isArray(data)) {
-                setQualifications(data);
-                console.log("Data:" + data);
-            }
-        };
-        loadQualifications();
-    }, []);
-    console.log("Qualifications:" + qualifications);
+    const {
+        qualifications,
+        loading,
+        error,
+        showModal,
+        modalMode,
+        selectedQualification,
+        skillInput,
+        setSkillInput,
+        openAddModal,
+        openEditModal,
+        openDeleteModal,
+        closeModal,
+        saveQualification,
+        getModalTitle,
+        getModalSaveText
+    } = useQualificationManagement();
 
     const filteredQualifications = qualifications.filter(q => 
-        q.skill.toLocaleLowerCase().includes(debouncedSearchInput.toLowerCase())
+        q.skill.toLowerCase().includes(debouncedSearchInput.toLowerCase())
     );
+
+    const renderModalContent = () => {
+        if (modalMode === 'delete' && selectedQualification) {
+            return (
+                <p>
+                    Möchten Sie die Qualifikation <strong>{selectedQualification?.skill}</strong> wirklich löschen?
+                </p>
+            );
+        }
+        return (
+            <>
+                <InputField
+                    type="text"
+                    id="skillInput"
+                    label="Qualifikationsname"
+                    placeholder="z.B. Java Developer"
+                    value={skillInput}
+                    onChange={(e) => setSkillInput(e.target.value)}
+                />
+            </>
+        );
+    };
+
+
 
     if (loading) return <Loader />;
     if (error) return <p className="text-danger">Fehler: {error}</p>;
@@ -43,7 +68,7 @@ export function QualificationsOverview() {
                     <h1>Qualifikationsübersicht</h1>
                     <button
                     className="btn-new-employee"
-                    onClick={() => navigate('/qualifications/add')}
+                    onClick={openAddModal}
                     >
                     Neue Qualifikation anlegen
                     </button>
@@ -88,14 +113,14 @@ export function QualificationsOverview() {
                                     <Col xs={2} className="text-end">
                                         <button 
                                             className="btn btn-link text-black-50 p-1"
-                                            onClick={() => navigate(`/qualifications/edit/${q.id}`)}
+                                            onClick={() => openEditModal(q)}
                                             title="Qualifikation bearbeiten"
                                         >
                                             <AiOutlineEdit />
                                         </button>
                                         <button 
                                             className="btn btn-link text-danger p-1"
-                                            onClick={() => handleDelete(q.id)}
+                                            onClick={() => openDeleteModal(q)}
                                             title="Qualifikation löschen"
                                         >
                                             <AiOutlineDelete />
@@ -109,6 +134,15 @@ export function QualificationsOverview() {
                     </div>
                 </div>
             </div>
+
+            <CustomModal
+                show={showModal}
+                onClose={closeModal}
+                onSave={saveQualification}
+                title={getModalTitle()}
+                saveButtonText={getModalSaveText()}
+                children={renderModalContent()}           
+            />
         </>
     )
 }
