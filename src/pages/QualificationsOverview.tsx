@@ -4,12 +4,11 @@ import { AiOutlineDelete, AiOutlineEdit } from "react-icons/ai";
 import { useNavigate } from "react-router-dom"
 import { useDebounce } from "../hooks/useDebounce";
 import { useQualifiactionApi } from "../hooks/useQualificationApi";
-import { BarLoader } from "react-spinners";
 import { Loader } from "../components/common/Loader";
 
 export function QualificationsOverview() {
     const navigate = useNavigate();
-    const {fetchQualifications, fetchQualificationById, loading, error} = useQualifiactionApi();
+    const {fetchQualifications, loading, error} = useQualifiactionApi();
     const [qualifications, setQualifications] = useState<any[]>([]);
     const [searchInput, setSearchInput] = useState("");
     const debouncedSearchInput = useDebounce(searchInput, 300);
@@ -26,7 +25,7 @@ export function QualificationsOverview() {
             }
         };
         loadQualifications();
-    }, []);
+    }, [fetchQualifications]);
     console.log("Qualifications:" + qualifications);
 
     const filteredQualifications = qualifications.filter(q => 
