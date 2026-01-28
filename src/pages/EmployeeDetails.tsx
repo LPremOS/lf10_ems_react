@@ -1,8 +1,19 @@
-import { Layout } from "../components/Layout";
 import { EmployeeDetailsView } from "./EmployeeDetailsView";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
+
+interface Employee {
+    id: string;
+    vorname: string;
+    nachname: string;
+    email: string;
+    telefonnummer: string;
+    abteilung: string;
+    position: string;
+    standort: string;
+    qualifikationen: string[];
+}
 
 // Mock-Daten für die Detailansicht (bis Backend verbunden ist)
 const mockEmployees = [
@@ -66,7 +77,7 @@ const mockEmployees = [
 export function EmployeeDetails() {
     const { id } = useParams<{ id: string }>();
     const { fetchEmployeeById, loading } = useEmployeeApi();
-    const [employee, setEmployee] = useState(null);
+    const [employee, setEmployee] = useState<Employee | null>(null);
 
     useEffect(() => {
         const loadEmployee = async () => {
@@ -77,9 +88,9 @@ export function EmployeeDetails() {
                 // Fallback auf Mock-Daten, falls Backend nicht verfügbar
                 if (!data) {
                     const mockEmployee = mockEmployees.find(emp => emp.id === id);
-                    setEmployee(mockEmployee || null);
+                    setEmployee((mockEmployee || null) as Employee | null);
                 } else {
-                    setEmployee(data);
+                    setEmployee(data as Employee);
                 }
             }
         };
@@ -87,8 +98,6 @@ export function EmployeeDetails() {
     }, [id, fetchEmployeeById]);
 
     return (
-        <Layout>
-            <EmployeeDetailsView employee={employee} loading={loading} />
-        </Layout>
+        <EmployeeDetailsView employee={employee} loading={loading} />
     );
 }

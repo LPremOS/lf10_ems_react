@@ -1,4 +1,3 @@
-import { Layout } from "../components/Layout";
 import { EmployeeForm } from "./EmployeeForm";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -106,20 +105,14 @@ export function EmployeeEdit() {
   };
 
   if (loading) {
-    return (
-      <Layout>
-        <div style={{ padding: '2rem' }}>Laden...</div>
-      </Layout>
-    );
+    return <div style={{ padding: '2rem' }}>Laden...</div>;
   }
 
   return (
-    <Layout>
-      <EmployeeForm
-        initialData={employee}
-        onSubmit={handleSubmit}
-        isEdit={true}
-      />
-    </Layout>
+    <EmployeeForm
+      initialData={employee}
+      onSubmit={handleSubmit}
+      isEdit={true}
+    />
   );
 }

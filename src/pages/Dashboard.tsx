@@ -1,6 +1,5 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
-import {FiAward, FiHome, FiUsers, FiArrowRight, FiBriefcase} from "react-icons/fi";
+import {FiAward, FiUsers, FiArrowRight} from "react-icons/fi";
 
 
 import "./Dashboard.css";

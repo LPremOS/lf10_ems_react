@@ -104,3 +104,39 @@
     background: rgba(248, 113, 113, 0.15);
     color: #fecdd3;
 }
+
+/* ===== MOBILE DRAWER MODE ===== */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100vh;
+        z-index: 1000;
+
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+
+        background: #f8fafc;
+        color: #0f172a;
+        box-shadow: 10px 0 30px rgba(0,0,0,0.18);
+    }
+
+    .sidebar.is-mobile-open {
+        transform: translateX(0);
+    }
+
+    .sidebar.is-collapsed {
+        width: 240px;
+        align-items: stretch;
+    }
+
+    .sidebar__link:hover {
+        background: rgba(15, 23, 42, 0.06);
+    }
+
+    .sidebar__link.is-active {
+        background: #16a34a;
+        color: #ffffff;
+    }
+}

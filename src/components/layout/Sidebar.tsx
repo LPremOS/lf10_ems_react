@@ -9,6 +9,9 @@ type SidebarProps = {
     onToggle: () => void;
     onLogout: () => void;
     appName?: string;
+
+    isMobileOpen: boolean;
+    onCloseMobile: () => void;
 };
 
 export function Sidebar({
@@ -17,10 +20,12 @@ export function Sidebar({
     onToggle,
     onLogout,
     appName = "HiTec EMS",
+    isMobileOpen,
+    onCloseMobile,
 }: SidebarProps) {
     return (
-        <aside className={`sidebar ${isCollapsed ? "is-collapsed" : ""}`}>
-            <div className="sidebar__header">
+        <aside className={`sidebar ${isCollapsed ? "is-collapsed" : ""} ${isMobileOpen ? "is-mobile-open" : ""}`}>
+        <div className="sidebar__header">
                 <button type="button" className="sidebar__toggle" onClick={onToggle}>
                     <FiMenu />
                 </button>
@@ -35,6 +40,7 @@ export function Sidebar({
                         end
                         className={({isActive}) => `sidebar__link ${isActive ? "is-active" : ""}`}
                         title={isCollapsed ? item.label : undefined}
+                        onClick={onCloseMobile}
                     >
                         <span className="sidebar__icon" aria-hidden="true">{item.icon}</span>
                         {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
@@ -46,8 +52,10 @@ export function Sidebar({
                 <button
                     type="button"
                     className="sidebar__link sidebar__logout"
-                    onClick={onLogout}
-                    title={isCollapsed ? "Abmelden" : undefined}
+                    onClick={() => {
+                        onCloseMobile();
+                        onLogout();
+                    }}
                 >
                     <span className="sidebar__icon" aria-hidden="true">
                         <FiLogOut />
