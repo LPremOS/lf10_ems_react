@@ -18,7 +18,6 @@ export function AppLayout() {
     const handleLogout = async () => {
         try {
             await auth.removeUser();
-            await auth.signoutRedirect();
             closeMobile();
             navigate("/login", { replace: true });
         } catch (e) {
