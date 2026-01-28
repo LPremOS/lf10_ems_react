@@ -139,13 +139,13 @@ export function EmployeeOverview() {
 
       <div className="pagination">
         <button className="pagination-btn">
-          <FiChevronLeft /> Previous
+          <FiChevronLeft /> Zurück
         </button>
         <button className="pagination-number pagination-active">1</button>
         <button className="pagination-number">2</button>
         <button className="pagination-number">3</button>
         <button className="pagination-btn">
-          Next <FiChevronRight />
+          Weiter <FiChevronRight />
         </button>
       </div>
     </div>

@@ -18,7 +18,7 @@
 }
 
 .btn-new-employee {
-  background-color: #28a745;
+  background-color: #v;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -242,13 +242,12 @@
 }
 
 .pagination-active {
-  background-color: #007bff;
+  background-color: #2eb82e;
   color: white;
-  border-color: #007bff;
+  border-color: #2eb82e;
 }
 
 .pagination-active:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: #209220;
+  border-color: #209220;
 }
-
