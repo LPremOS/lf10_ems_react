@@ -1,27 +1,66 @@
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {FiAward, FiHome, FiUsers, FiArrowRight, FiBriefcase} from "react-icons/fi";
+import { useEmployeeApi } from "../hooks/useEmployeeApi";
+import { useQualifiactionApi } from "../hooks/useQualificationApi";
+import "./Dashboard.css";
 import { useNavigate } from "react-router-dom";
 import {FiAward, FiUsers, FiArrowRight} from "react-icons/fi";
 
+interface Employee {
+  id: string;
+  vorname: string;
+  nachname: string;
+  ort: string;
+  qualifikationen: string[];
+}
 
-import "./Dashboard.css";
+interface Qualification {
+  id: string;
+  name: string;
+}
 
 const Dashboard = () => {
     const navigate = useNavigate();
+    const { fetchEmployees, loading: loadingEmployees } = useEmployeeApi();
+    const { fetchQualifications, loading: loadingQualifications } = useQualifiactionApi();
+    const [employees, setEmployees] = useState<Employee[]>([]);
+    const [qualifications, setQualifications] = useState<Qualification[]>([]);
+
+    useEffect(() => {
+        const loadEmployees = async () => {
+            const data = await fetchEmployees();
+            if (Array.isArray(data)) setEmployees(data);
+        };
+        loadEmployees();        
+    }, []);
+
+    useEffect(() => {
+        const loadQualifications = async () => {
+            const data = await fetchQualifications();
+            if (Array.isArray(data)) setQualifications(data);
+        };
+        loadQualifications();
+    }, []);
+    
     return (
         <>
             <div className="dashboard-content-wrapper">
                 <h1 className="dashboard-title">Dashboard</h1>
                 <div className="dashboard-cards-row">
                     <div className="dashboard-card">
-                        <div className="dashboard-card-value"> 100</div>
+                        <div className="dashboard-card-value">{loadingEmployees ? '...' : employees.length}</div>
                         <div className="dashboard-card-label">Mitarbeiter insgesamt</div>
                             <span className="dashboard-employees-icon"><FiUsers/></span>
                     </div>
                     <div className="dashboard-card">
-                        <div className="dashboard-card-value">5</div>
+                        <div className="dashboard-card-value">{loadingQualifications ? '...' : qualifications.length}</div>
                         <div className="dashboard-card-label">Qualifikationen insgesamt</div>
                             <span className="dashboard-qualifications-icon"><FiAward/></span>
                     </div>
                 </div>
+
+                
                 <h2 className="dashboard-subtitle">Schnellzugriff</h2>
                 <div className="dashboard-quicklinks-row">
                     <div
