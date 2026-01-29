@@ -1,6 +1,5 @@
 import {useAuth} from "react-oidc-context";
 import {useState} from "react";
-import type { QualificationType } from "../types/QualificationType";
 
 export function useQualifiactionApi() {
     const auth = useAuth();

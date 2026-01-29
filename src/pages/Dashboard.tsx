@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {FiAward, FiHome, FiUsers, FiArrowRight, FiBriefcase} from "react-icons/fi";
+import {FiAward, FiUsers, FiArrowRight} from "react-icons/fi";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualifiactionApi } from "../hooks/useQualificationApi";
 import "./Dashboard.css";
@@ -31,7 +31,7 @@ const Dashboard = () => {
             if (Array.isArray(data)) setEmployees(data);
         };
         loadEmployees();        
-    }, []);
+    }, [fetchEmployees]);
 
     useEffect(() => {
         const loadQualifications = async () => {
@@ -39,7 +39,7 @@ const Dashboard = () => {
             if (Array.isArray(data)) setQualifications(data);
         };
         loadQualifications();
-    }, []);
+    }, [fetchQualifications]);
     
     return (
         <>

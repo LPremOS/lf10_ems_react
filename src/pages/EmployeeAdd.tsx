@@ -1,5 +1,6 @@
 import { EmployeeForm } from "./EmployeeForm";
 import { useNavigate } from "react-router-dom";
+import { useEmployeeApi } from "../hooks/useEmployeeApi";
 
 interface EmployeeFormData {
   vorname: string;
@@ -14,14 +15,16 @@ interface EmployeeFormData {
 
 export function EmployeeAdd() {
   const navigate = useNavigate();
+  const { addEmployee, error } = useEmployeeApi();
 
-  const handleSubmit = (data: EmployeeFormData) => {
-    // Später: API-Call zum Backend
-    console.log('Neuer Mitarbeiter:', data);
-
-    // Temporär: Erfolgsmeldung und zurück zur Übersicht
-    alert('Mitarbeiter wurde erfolgreich hinzugefügt!');
-    navigate('/employees');
+  const handleSubmit = async (data: EmployeeFormData) => {
+    const result = await addEmployee(data);
+    if (result) {
+      alert('Mitarbeiter wurde erfolgreich hinzugefügt!');
+      navigate('/employees');
+    } else if (error) {
+      alert(`Fehler beim Hinzufügen: ${error}`);
+    }
   };
 
   return <EmployeeForm onSubmit={handleSubmit} />;

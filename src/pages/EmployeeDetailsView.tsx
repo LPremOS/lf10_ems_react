@@ -1,19 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import { AiOutlineEdit } from 'react-icons/ai';
 import { FiArrowLeft } from 'react-icons/fi';
+import type { Employee } from '../types/Employee';
 import './EmployeeDetailsView.css';
 
-interface Employee {
-  id: string;
-  vorname: string;
-  nachname: string;
-  email: string;
-  telefonnummer: string;
-  abteilung: string;
-  position: string;
-  standort: string;
-  qualifikationen: string[];
-}
 
 interface EmployeeDetailsViewProps {
   employee: Employee | null;

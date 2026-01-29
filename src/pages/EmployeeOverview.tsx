@@ -1,49 +1,44 @@
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useEmployeeManagement } from '../hooks/useEmployeeManagement';
+import { useEmployeeApi } from '../hooks/useEmployeeApi';
+import { Loader } from '../components/common/Loader';
 import './EmployeeOverview.css';
 
 export function EmployeeOverview() {
   const navigate = useNavigate();
+  const { employees, loading, error, refreshEmployees } = useEmployeeManagement();
+  const { deleteEmployee } = useEmployeeApi();
 
-  // Mock Daten wie im Bild
-  const employees = [
-    {
-      id: '1',
-      vorname: 'Anna',
-      nachname: 'Müller',
-      ort: 'Berlin',
-      qualifikationen: ['Projektmanagement', 'Softwareentwicklung']
-    },
-    {
-      id: '2',
-      vorname: 'Max',
-      nachname: 'Schmidt',
-      ort: 'München',
-      qualifikationen: ['Datenanalyse', 'Cloud Computing']
-    },
-    {
-      id: '3',
-      vorname: 'Lena',
-      nachname: 'Meier',
-      ort: 'Hamburg',
-      qualifikationen: ['Projektmanagement', 'Marketing', 'Vertrieb']
-    },
-    {
-      id: '4',
-      vorname: 'Paul',
-      nachname: 'Wagner',
-      ort: 'Frankfurt',
-      qualifikationen: ['Softwareentwicklung', 'Cloud Computing']
-    },
-    {
-      id: '5',
-      vorname: 'Sophie',
-      nachname: 'Schneider',
-      ort: 'Köln',
-      qualifikationen: ['Datenanalyse', 'Vertrieb']
+  const handleDelete = async (id: string, name: string) => {
+    if (window.confirm(`Möchten Sie ${name} wirklich löschen?`)) {
+      const success = await deleteEmployee(id);
+      if (success) {
+        alert('Mitarbeiter wurde erfolgreich gelöscht!');
+        // Aktualisiere die Liste
+        refreshEmployees();
+      } else {
+        alert('Fehler beim Löschen des Mitarbeiters!');
+      }
     }
-  ];
+  };
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return (
+      <div className="employee-overview">
+        <div className="alert alert-danger" role="alert">
+          <h4>Fehler beim Laden der Mitarbeiter</h4>
+          <p>{error}</p>
+          <p className="mb-0">Bitte stellen Sie sicher, dass das Backend läuft und Sie angemeldet sind.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="employee-overview">
@@ -96,43 +91,58 @@ export function EmployeeOverview() {
             </tr>
           </thead>
           <tbody>
-            {employees.map((employee, index) => (
-              <tr key={index}>
-                <td>{employee.vorname}</td>
-                <td>{employee.nachname}</td>
-                <td>{employee.ort}</td>
-                <td>
-                  <div className="qualifications">
-                    {employee.qualifikationen.map((qual, idx) => (
-                      <span key={idx} className="qualification-badge">
-                        {qual}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-                <td>
-                  <div className="action-buttons">
-                    <button
-                      className="action-btn"
-                      onClick={() => navigate(`/employees/${employee.id}`)}
-                      title="Mitarbeiter ansehen"
-                    >
-                      <AiOutlineEye />
-                    </button>
-                    <button
-                      className="action-btn"
-                      onClick={() => navigate(`/employees/${employee.id}/edit`)}
-                      title="Mitarbeiter bearbeiten"
-                    >
-                      <AiOutlineEdit />
-                    </button>
-                    <button className="action-btn action-btn-delete" title="Mitarbeiter löschen">
-                      <AiOutlineDelete />
-                    </button>
-                  </div>
+            {employees.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center text-muted py-4">
+                  Keine Mitarbeiter gefunden.
                 </td>
               </tr>
-            ))}
+            ) : (
+              employees.map((employee, index) => (
+                <tr key={index}>
+                  <td>{employee.vorname}</td>
+                  <td>{employee.nachname}</td>
+                  <td>{employee.standort}</td>
+                  <td>
+                    <div className="qualifications">
+                      {employee.qualifikationen && Array.isArray(employee.qualifikationen) ? (
+                        employee.qualifikationen.map((qual, idx) => (
+                          <span key={idx} className="qualification-badge">
+                            {qual}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-muted">Keine Qualifikationen</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button
+                        className="action-btn"
+                        onClick={() => navigate(`/employees/${employee.id}`)}
+                        title="Mitarbeiter ansehen"
+                      >
+                        <AiOutlineEye />
+                      </button>
+                      <button
+                        className="action-btn"
+                        onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                        title="Mitarbeiter bearbeiten"
+                      >
+                        <AiOutlineEdit />
+                      </button>
+                        <button className="action-btn action-btn-delete"
+                          title="Mitarbeiter löschen"
+                          onClick={() => handleDelete(employee.id, `${employee.vorname} ${employee.nachname}`)}
+                        >
+                          <AiOutlineDelete />
+                        </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
