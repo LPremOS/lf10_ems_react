@@ -47,8 +47,18 @@ const FILTER_LABELS: Record<FilterKey, string> = {
     qualifikation: "Qualifikation",
 };
 
+const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+    { key: "vorname", label: "Vorname" },
+    { key: "nachname", label: "Nachname" },
+    { key: "standort", label: "Ort" },
+];
+
 function normalizeFilterValue(value: string): string {
     return value.trim().toLowerCase();
+}
+
+function isSortKey(value: string): value is SortKey {
+    return value === "vorname" || value === "nachname" || value === "standort";
 }
 
 function loadPersistedOverviewState(): PersistedOverviewState | null {
@@ -67,9 +77,9 @@ function loadPersistedOverviewState(): PersistedOverviewState | null {
 
         const hasValidFilters =
             typeof filters?.vorname === "string" &&
-            true &&
-            true &&
-            true;
+            typeof filters.nachname === "string" &&
+            typeof filters.standort === "string" &&
+            typeof filters.qualifikation === "string";
 
         const hasValidSortKey =
             parsed.sortKey === null ||
@@ -208,6 +218,9 @@ export function EmployeeOverview() {
     }, [filteredEmployees, sortDirection, sortKey]);
 
     const totalEmployees = sortedEmployees.length;
+    const emptyStateMessage = hasFilters
+        ? "Keine Mitarbeiter mit den aktuellen Filtern gefunden."
+        : "Keine Mitarbeiter gefunden.";
     const totalPages = Math.max(1, Math.ceil(totalEmployees / ITEMS_PER_PAGE));
     const paginatedEmployees = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -277,10 +290,31 @@ export function EmployeeOverview() {
         return sortDirection === "asc" ? " ▲" : " ▼";
     };
 
+    const handleMobileSortChange = (value: string) => {
+        if (!value) {
+            setSortKey(null);
+            return;
+        }
+
+        if (!isSortKey(value)) {
+            return;
+        }
+
+        setSortKey(value);
+        setSortDirection("asc");
+    };
+
     const closeDeleteModal = () => {
         if (!isDeleting) {
             setEmployeeToDelete(null);
         }
+    };
+
+    const openDeleteModal = (id: string, vorname: string, nachname: string) => {
+        setEmployeeToDelete({
+            id,
+            name: `${vorname} ${nachname}`,
+        });
     };
 
     const handleDelete = async () => {
@@ -445,9 +479,7 @@ export function EmployeeOverview() {
                         {totalEmployees === 0 ? (
                             <tr>
                                 <td colSpan={5} className="text-center text-muted py-4">
-                                    {hasFilters
-                                        ? "Keine Mitarbeiter mit den aktuellen Filtern gefunden."
-                                        : "Keine Mitarbeiter gefunden."}
+                                    {emptyStateMessage}
                                 </td>
                             </tr>
                         ) : (
@@ -488,12 +520,7 @@ export function EmployeeOverview() {
                                             <button
                                                 className="action-btn action-btn-delete"
                                                 title="Mitarbeiter löschen"
-                                                onClick={() =>
-                                                    setEmployeeToDelete({
-                                                        id: employee.id,
-                                                        name: `${employee.vorname} ${employee.nachname}`,
-                                                    })
-                                                }
+                                                onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
                                             >
                                                 <AiOutlineDelete />
                                             </button>
@@ -504,6 +531,84 @@ export function EmployeeOverview() {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="mobile-employee-list">
+                <div className="mobile-sort-controls">
+                    <label htmlFor="mobileSortSelect">Sortierung</label>
+                    <div className="mobile-sort-controls-row">
+                        <select
+                            id="mobileSortSelect"
+                            value={sortKey ?? ""}
+                            onChange={(event) => handleMobileSortChange(event.target.value)}
+                        >
+                            <option value="">Keine Sortierung</option>
+                            {SORT_OPTIONS.map((option) => (
+                                <option key={option.key} value={option.key}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                        <button
+                            type="button"
+                            className="mobile-sort-direction-btn"
+                            onClick={() => setSortDirection((previous) => (previous === "asc" ? "desc" : "asc"))}
+                            disabled={!sortKey}
+                            title="Sortierrichtung wechseln"
+                        >
+                            {sortDirection === "asc" ? "A-Z" : "Z-A"}
+                        </button>
+                    </div>
+                </div>
+
+                {totalEmployees === 0 ? (
+                    <div className="employee-card employee-card-empty text-muted">
+                        {emptyStateMessage}
+                    </div>
+                ) : (
+                    paginatedEmployees.map((employee) => (
+                        <article key={employee.id} className="employee-card">
+                            <div className="employee-card-header">
+                                <h4>{employee.vorname} {employee.nachname}</h4>
+                                <span className="employee-card-location">{employee.standort}</span>
+                            </div>
+                            <div className="employee-card-qualifications">
+                                {employee.qualifikationen.length > 0 ? (
+                                    employee.qualifikationen.map((qualification) => (
+                                        <span key={qualification} className="qualification-badge">
+                                            {qualification}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="text-muted">Keine Qualifikationen</span>
+                                )}
+                            </div>
+                            <div className="action-buttons action-buttons-mobile">
+                                <button
+                                    className="action-btn"
+                                    onClick={() => navigate(`/employees/${employee.id}`)}
+                                    title="Mitarbeiter ansehen"
+                                >
+                                    <AiOutlineEye />
+                                </button>
+                                <button
+                                    className="action-btn"
+                                    onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                                    title="Mitarbeiter bearbeiten"
+                                >
+                                    <AiOutlineEdit />
+                                </button>
+                                <button
+                                    className="action-btn action-btn-delete"
+                                    title="Mitarbeiter löschen"
+                                    onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
+                                >
+                                    <AiOutlineDelete />
+                                </button>
+                            </div>
+                        </article>
+                    ))
+                )}
             </div>
 
             <div className="pagination">

@@ -124,6 +124,7 @@
   display: inline-block;
   background-color: rgba(145, 239, 113, 0.48);
   color: #216912;
+  padding: 6px 12px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 500;
@@ -138,6 +139,10 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+  }
+
+  .details-header h1 {
+    font-size: 1.6rem;
   }
 
   .details-actions {
@@ -158,5 +163,23 @@
 
   .details-section {
     padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .employee-details {
+    padding: 0.75rem;
+  }
+
+  .details-header h1 {
+    font-size: 1.35rem;
+  }
+
+  .details-section {
+    padding: 1rem;
+  }
+
+  .details-section h2 {
+    font-size: 1.2rem;
   }
 }

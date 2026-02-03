@@ -270,6 +270,14 @@
 }
 
 @media (max-width: 900px) {
+  .employee-form-page {
+    padding: 20px 16px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
   .page-title {
     font-size: 30px;
   }
@@ -295,5 +303,27 @@
   .btn-secondary,
   .btn-primary {
     width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .employee-form-page {
+    padding: 16px 12px;
+  }
+
+  .card {
+    padding: 14px;
+  }
+
+  .page-title {
+    font-size: 24px;
+  }
+
+  .card-title {
+    font-size: 20px;
+  }
+
+  .subsection-title {
+    font-size: 16px;
   }
 }
