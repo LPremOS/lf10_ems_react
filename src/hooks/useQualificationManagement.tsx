@@ -10,16 +10,17 @@ export function useQualificationManagement() {
     const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>('add');
     const [selectedQualification, setSelectedQualification] = useState<QualificationType | null>(null);
 
-    useEffect(() => {
-        loadQualifications();
-    }, []);
-
     const loadQualifications = async () => {
         const data = await fetchQualifications();
         if (Array.isArray(data)) {
             setQualifications(data);
         }
     };
+
+    useEffect(() => {
+        loadQualifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const openAddModal = () => {
         setModalMode('add');
@@ -40,13 +41,10 @@ export function useQualificationManagement() {
 
     const saveQualification = async () => {
         if (modalMode === 'add') {
-            console.log("Neue Qualifikation:", skillInput);
             await addQualification(skillInput);
         } else if (modalMode === 'edit' && selectedQualification) {
-            console.log("Bearbeite:", selectedQualification.id, skillInput);
             await editQualification(selectedQualification.id, skillInput);
         } else if (modalMode === 'delete' && selectedQualification) {
-            console.log("Lösche:", selectedQualification.id);
             await deleteQualification(selectedQualification?.id);
         }
         closeModal();

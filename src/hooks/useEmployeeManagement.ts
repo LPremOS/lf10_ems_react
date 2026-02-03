@@ -10,7 +10,6 @@ export function useEmployeeManagement() {
         const loadEmployees = async () => {
             const data = await fetchEmployees();
             if (Array.isArray(data)) {
-                console.log('[useEmployeeManagement] Loaded', data.length, 'employees');
                 setEmployees(data);
             }
         };
@@ -21,7 +20,6 @@ export function useEmployeeManagement() {
     const refreshEmployees = async () => {
         const data = await fetchEmployees();
         if (Array.isArray(data)) {
-            console.log('[useEmployeeManagement] Refreshed', data.length, 'employees');
             setEmployees(data);
         }
     };

@@ -126,11 +126,10 @@
 
 .qualification-badge {
   display: inline-block;
-  padding: 0.5rem 1rem;
-  background-color: #f3f4f6;
-  color: #1a1a1a;
-  border-radius: 6px;
-  font-size: 0.875rem;
+  background-color: rgba(145, 239, 113, 0.48);
+  color: #216912;
+  border-radius: 20px;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 

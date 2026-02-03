@@ -90,6 +90,7 @@
 .filter-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .btn-filter {
@@ -106,6 +107,19 @@
 
 .btn-filter:hover {
   background-color: #e0e0e0;
+}
+
+.btn-filter:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-filter:disabled:hover {
+  background-color: #f0f0f0;
+}
+
+.btn-filter-reset {
+  background-color: white;
 }
 
 .table-container {

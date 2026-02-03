@@ -26,16 +26,16 @@ export function useQualifiactionApi() {
                 'Authorization': `Bearer ${auth.user.access_token}`
             };
 
-            console.log("Auth: " + auth.user.access_token);
 
             const response = await fetch('http://localhost:8089/qualifications', {headers});
             if (!response.ok) {
                 setError("Fehler beim Laden der Qualifikationen");
-
+                return [];
             }
             return await response.json();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten');
+            return [];
         } finally {
             setLoading(false);
         }

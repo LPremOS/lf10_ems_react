@@ -62,24 +62,20 @@ export function EmployeeDetailsView({ employee, loading }: EmployeeDetailsViewPr
               <p>{employee.nachname}</p>
             </div>
             <div className="detail-item">
-              <label>E-Mail</label>
-              <p>{employee.email}</p>
-            </div>
-            <div className="detail-item">
               <label>Telefonnummer</label>
               <p>{employee.telefonnummer}</p>
             </div>
             <div className="detail-item">
-              <label>Abteilung</label>
-              <p>{employee.abteilung}</p>
-            </div>
-            <div className="detail-item">
-              <label>Position</label>
-              <p>{employee.position}</p>
-            </div>
-            <div className="detail-item full-width">
               <label>Standort</label>
               <p>{employee.standort}</p>
+            </div>
+            <div className="detail-item">
+              <label>Straße</label>
+              <p>{employee.street}</p>
+            </div>
+            <div className="detail-item">
+              <label>PLZ</label>
+              <p>{employee.postcode}</p>
             </div>
           </div>
         </section>

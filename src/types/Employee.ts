@@ -5,11 +5,10 @@ export interface Employee {
   id: string;
   vorname: string;
   nachname: string;
-  email: string;
   telefonnummer: string;
-  abteilung: string;
-  position: string;
   standort: string;
+  street: string;
+  postcode: string;
   qualifikationen: string[];
 }
 

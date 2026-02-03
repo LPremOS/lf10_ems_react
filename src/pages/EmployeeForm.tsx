@@ -1,273 +1,380 @@
-import { useMemo, useState } from 'react';
-import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { FiTrash2, FiPlus } from 'react-icons/fi';
-import './EmployeeForm.css';
+import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
+import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { CustomModal } from "../components/common/Modal";
+import { useQualificationManagement } from "../hooks/useQualificationManagement";
+import type { Employee } from "../types/Employee";
+import "./EmployeeForm.css";
 
-interface EmployeeFormData {
-  vorname: string;
-  nachname: string;
-  email: string;
-  telefonnummer: string;
-  abteilung: string;
-  position: string;
-  standort: string; // im UI als "Ort"
-  qualifikationen: string[];
-}
+type EmployeeFormData = Omit<Employee, "id">;
+type EmployeeFieldName = Exclude<keyof EmployeeFormData, "qualifikationen">;
+type FormErrors = Partial<Record<EmployeeFieldName, string>>;
 
 interface EmployeeFormProps {
-  initialData?: EmployeeFormData | null;
-  onSubmit: (data: EmployeeFormData) => void;
-  isEdit?: boolean;
+    initialData?: EmployeeFormData | null;
+    onSubmit: (data: EmployeeFormData) => void;
+    isEdit?: boolean;
+    isSubmitting?: boolean;
+    apiError?: string | null;
+    submitLabel?: string;
 }
 
-// Verfügbare Qualifikationen
-const availableQualifications = [
-  'Projektmanagement',
-  'Cloud-Architektur',
-  'Datenbank-Administration',
-  'Agile Methoden',
-  'Cybersicherheit',
-  'Teamleitung',
-  'DevOps',
-  'Qualitätssicherung',
-  'Softwareentwicklung',
-  'Datenanalyse',
-  'Marketing',
-  'Vertrieb',
-  'Python',
-  'Machine Learning',
-  'Kundenkommunikation',
-  'SQL',
-  'Tableau',
-  'Microservices'
-];
+const POSTCODE_PATTERN = /^[0-9]{5}$/;
+const PHONE_PATTERN = /^[0-9+()\-/\s]{6,20}$/;
 
-export function EmployeeForm({ initialData, onSubmit, isEdit = false }: EmployeeFormProps) {
-  const navigate = useNavigate();
+function createInitialFormData(initialData?: EmployeeFormData | null): EmployeeFormData {
+    return {
+        vorname: initialData?.vorname ?? "",
+        nachname: initialData?.nachname ?? "",
+        telefonnummer: initialData?.telefonnummer ?? "",
+        standort: initialData?.standort ?? "",
+        street: initialData?.street ?? "",
+        postcode: initialData?.postcode ?? "",
+        qualifikationen: initialData?.qualifikationen ?? [],
+    };
+}
 
-  const [formData, setFormData] = useState<EmployeeFormData>({
-    vorname: initialData?.vorname || '',
-    nachname: initialData?.nachname || '',
-    email: initialData?.email || '',
-    telefonnummer: initialData?.telefonnummer || '',
-    abteilung: initialData?.abteilung || '',
-    position: initialData?.position || '',
-    standort: initialData?.standort || '',
-    qualifikationen: initialData?.qualifikationen || []
-  });
+function validateForm(data: EmployeeFormData): FormErrors {
+    const errors: FormErrors = {};
 
-  // Dropdown-Auswahl für "Qualifikation hinzufügen"
-  const [selectedQualification, setSelectedQualification] = useState<string>('');
+    if (!data.vorname.trim()) errors.vorname = "Bitte geben Sie einen Vornamen ein.";
+    if (!data.nachname.trim()) errors.nachname = "Bitte geben Sie einen Nachnamen ein.";
+    if (!data.standort.trim()) errors.standort = "Bitte geben Sie einen Ort ein.";
+    if (!data.street.trim()) errors.street = "Bitte geben Sie eine Straße ein.";
+    if (!POSTCODE_PATTERN.test(data.postcode.trim())) errors.postcode = "Bitte geben Sie eine 5-stellige PLZ ein.";
+    if (!PHONE_PATTERN.test(data.telefonnummer.trim())) errors.telefonnummer = "Bitte geben Sie eine gültige Telefonnummer ein.";
 
-  const selectableQualifications = useMemo(() => {
-    const selected = new Set(formData.qualifikationen);
-    return availableQualifications.filter(q => !selected.has(q));
-  }, [formData.qualifikationen]);
+    return errors;
+}
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+export function EmployeeForm({
+    initialData,
+    onSubmit,
+    isEdit = false,
+    isSubmitting = false,
+    apiError = null,
+    submitLabel,
+}: EmployeeFormProps) {
+    const navigate = useNavigate();
+    const {
+        qualifications,
+        loading: qualificationsLoading,
+        error: qualificationsError,
+    } = useQualificationManagement();
 
-  const removeQualification = (qualification: string) => {
-    setFormData(prev => ({
-      ...prev,
-      qualifikationen: prev.qualifikationen.filter(q => q !== qualification)
-    }));
-  };
+    const initialFormData = useMemo(() => createInitialFormData(initialData), [initialData]);
+    const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
+    const [selectedQualification, setSelectedQualification] = useState<string>("");
+    const [touched, setTouched] = useState<Partial<Record<EmployeeFieldName, boolean>>>({});
+    const [submitAttempted, setSubmitAttempted] = useState(false);
+    const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const addQualification = () => {
-    const q = selectedQualification.trim();
-    if (!q) return;
+    useEffect(() => {
+        setFormData(initialFormData);
+        setTouched({});
+        setSubmitAttempted(false);
+    }, [initialFormData]);
 
-    setFormData(prev => ({
-      ...prev,
-      qualifikationen: prev.qualifikationen.includes(q) ? prev.qualifikationen : [...prev.qualifikationen, q]
-    }));
+    const availableQualifications = useMemo(
+        () => qualifications.map((qualification) => qualification.skill),
+        [qualifications],
+    );
 
-    setSelectedQualification('');
-  };
+    const selectableQualifications = useMemo(() => {
+        const selected = new Set(formData.qualifikationen);
+        return availableQualifications.filter((qualification) => !selected.has(qualification));
+    }, [formData.qualifikationen, availableQualifications]);
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
+    const formErrors = useMemo(() => validateForm(formData), [formData]);
 
-  return (
-      <div className="employee-form-page">
-        <div className="employee-form-container">
-          <h1 className="page-title">{isEdit ? 'Mitarbeiter bearbeiten' : 'Mitarbeiter hinzufügen'}</h1>
+    const isDirty = useMemo(() => {
+        return (
+            formData.vorname !== initialFormData.vorname ||
+            formData.nachname !== initialFormData.nachname ||
+            formData.telefonnummer !== initialFormData.telefonnummer ||
+            formData.standort !== initialFormData.standort ||
+            formData.street !== initialFormData.street ||
+            formData.postcode !== initialFormData.postcode ||
+            formData.qualifikationen.length !== initialFormData.qualifikationen.length ||
+            formData.qualifikationen.some((qualification, index) => qualification !== initialFormData.qualifikationen[index])
+        );
+    }, [formData, initialFormData]);
 
-          <form onSubmit={handleSubmit} className="employee-form">
-            {/* Stammdaten */}
-            <section className="card">
-              <h2 className="card-title">Stammdaten</h2>
+    const hasValidationErrors = Object.keys(formErrors).length > 0;
+    const effectiveSubmitLabel = submitLabel ?? (isEdit ? "Änderungen speichern" : "Mitarbeiter anlegen");
 
-              <div className="grid-12">
-                {/* Row 1: Vorname | Nachname | Ort */}
-                <div className="field span-4">
-                  <label htmlFor="vorname">Vorname</label>
-                  <input
-                      type="text"
-                      id="vorname"
-                      name="vorname"
-                      value={formData.vorname}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+    const showFieldError = (field: EmployeeFieldName): boolean => {
+        return Boolean(formErrors[field]) && (Boolean(touched[field]) || submitAttempted);
+    };
 
-                <div className="field span-4">
-                  <label htmlFor="nachname">Nachname</label>
-                  <input
-                      type="text"
-                      id="nachname"
-                      name="nachname"
-                      value={formData.nachname}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+    const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = event.target;
+        setFormData((previous) => ({
+            ...previous,
+            [name]: value,
+        }));
+    };
 
-                <div className="field span-4">
-                  <label htmlFor="standort">Ort</label>
-                  <input
-                      type="text"
-                      id="standort"
-                      name="standort"
-                      value={formData.standort}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+    const markFieldTouched = (field: EmployeeFieldName) => {
+        setTouched((previous) => ({
+            ...previous,
+            [field]: true,
+        }));
+    };
 
-                {/* Row 2: E-Mail (breit) | Telefonnummer | Abteilung | Position */}
-                <div className="field span-5">
-                  <label htmlFor="email">E-Mail:</label>
-                  <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+    const removeQualification = (qualification: string) => {
+        setFormData((previous) => ({
+            ...previous,
+            qualifikationen: previous.qualifikationen.filter((entry) => entry !== qualification),
+        }));
+    };
 
-                <div className="field span-3">
-                  <label htmlFor="telefonnummer">Telefonnummer:</label>
-                  <input
-                      type="tel"
-                      id="telefonnummer"
-                      name="telefonnummer"
-                      value={formData.telefonnummer}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+    const addQualification = () => {
+        const qualification = selectedQualification.trim();
+        if (!qualification) return;
 
-                <div className="field span-2">
-                  <label htmlFor="abteilung">Abteilung</label>
-                  <input
-                      type="text"
-                      id="abteilung"
-                      name="abteilung"
-                      value={formData.abteilung}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
+        setFormData((previous) => ({
+            ...previous,
+            qualifikationen: previous.qualifikationen.includes(qualification)
+                ? previous.qualifikationen
+                : [...previous.qualifikationen, qualification],
+        }));
 
-                <div className="field span-2">
-                  <label htmlFor="position">Position</label>
-                  <input
-                      type="text"
-                      id="position"
-                      name="position"
-                      value={formData.position}
-                      onChange={handleInputChange}
-                      required
-                  />
-                </div>
-              </div>
-            </section>
+        setSelectedQualification("");
+    };
 
-            {/* Qualifikationen */}
-            <section className="card">
-              <h2 className="card-title">Qualifikationen</h2>
+    const handleSubmit = (event: FormEvent) => {
+        event.preventDefault();
+        setSubmitAttempted(true);
+        if (hasValidationErrors) return;
+        onSubmit(formData);
+    };
 
-              <div className="subsection">
-                <h3 className="subsection-title">Zugewiesene Qualifikationen</h3>
+    const handleCancelClick = () => {
+        if (isSubmitting) return;
+        if (!isDirty) {
+            navigate("/employees");
+            return;
+        }
+        setShowCancelConfirm(true);
+    };
 
-                {formData.qualifikationen.length === 0 ? (
-                    <p className="hint">Noch keine Qualifikationen zugewiesen.</p>
-                ) : (
-                    <div className="chips">
-                      {formData.qualifikationen.map(q => (
-                          <div key={q} className="chip">
-                            <span className="chip-text">{q}</span>
-                            <button
-                                type="button"
-                                className="chip-remove"
-                                onClick={() => removeQualification(q)}
-                                aria-label={`Qualifikation entfernen: ${q}`}
-                                title="Entfernen"
-                            >
-                              <FiTrash2 />
-                            </button>
-                          </div>
-                      ))}
+    const confirmCancel = () => {
+        setShowCancelConfirm(false);
+        navigate("/employees");
+    };
+
+    return (
+        <div className="employee-form-page">
+            <div className="employee-form-container">
+                <h1 className="page-title">{isEdit ? "Mitarbeiter bearbeiten" : "Mitarbeiter hinzufügen"}</h1>
+
+                <form onSubmit={handleSubmit} className="employee-form" noValidate>
+                    {apiError && (
+                        <div className="form-alert form-alert-error" role="alert">
+                            {apiError}
+                        </div>
+                    )}
+                    {submitAttempted && hasValidationErrors && (
+                        <div className="form-alert form-alert-error" role="alert">
+                            Bitte korrigieren Sie die markierten Felder.
+                        </div>
+                    )}
+
+                    <section className="card">
+                        <h2 className="card-title">Stammdaten</h2>
+
+                        <div className="grid-12">
+                            <div className="field span-4">
+                                <label htmlFor="vorname">Vorname</label>
+                                <input
+                                    type="text"
+                                    id="vorname"
+                                    name="vorname"
+                                    value={formData.vorname}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("vorname")}
+                                    className={showFieldError("vorname") ? "input-invalid" : ""}
+                                    required
+                                />
+                                {showFieldError("vorname") && <p className="field-error">{formErrors.vorname}</p>}
+                            </div>
+
+                            <div className="field span-4">
+                                <label htmlFor="nachname">Nachname</label>
+                                <input
+                                    type="text"
+                                    id="nachname"
+                                    name="nachname"
+                                    value={formData.nachname}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("nachname")}
+                                    className={showFieldError("nachname") ? "input-invalid" : ""}
+                                    required
+                                />
+                                {showFieldError("nachname") && <p className="field-error">{formErrors.nachname}</p>}
+                            </div>
+
+                            <div className="field span-4">
+                                <label htmlFor="standort">Ort</label>
+                                <input
+                                    type="text"
+                                    id="standort"
+                                    name="standort"
+                                    value={formData.standort}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("standort")}
+                                    className={showFieldError("standort") ? "input-invalid" : ""}
+                                    required
+                                />
+                                {showFieldError("standort") && <p className="field-error">{formErrors.standort}</p>}
+                            </div>
+
+                            <div className="field span-8">
+                                <label htmlFor="street">Straße</label>
+                                <input
+                                    type="text"
+                                    id="street"
+                                    name="street"
+                                    value={formData.street}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("street")}
+                                    className={showFieldError("street") ? "input-invalid" : ""}
+                                    required
+                                />
+                                {showFieldError("street") && <p className="field-error">{formErrors.street}</p>}
+                            </div>
+
+                            <div className="field span-4">
+                                <label htmlFor="postcode">PLZ</label>
+                                <input
+                                    type="text"
+                                    id="postcode"
+                                    name="postcode"
+                                    value={formData.postcode}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("postcode")}
+                                    className={showFieldError("postcode") ? "input-invalid" : ""}
+                                    required
+                                    maxLength={5}
+                                    pattern="[0-9]{5}"
+                                    placeholder="12345"
+                                />
+                                {showFieldError("postcode") && <p className="field-error">{formErrors.postcode}</p>}
+                            </div>
+
+                            <div className="field span-4">
+                                <label htmlFor="telefonnummer">Telefonnummer</label>
+                                <input
+                                    type="tel"
+                                    id="telefonnummer"
+                                    name="telefonnummer"
+                                    value={formData.telefonnummer}
+                                    onChange={handleInputChange}
+                                    onBlur={() => markFieldTouched("telefonnummer")}
+                                    className={showFieldError("telefonnummer") ? "input-invalid" : ""}
+                                    required
+                                />
+                                {showFieldError("telefonnummer") && <p className="field-error">{formErrors.telefonnummer}</p>}
+                            </div>
+                        </div>
+                    </section>
+
+                    <section className="card">
+                        <h2 className="card-title">Qualifikationen</h2>
+
+                        <div className="subsection">
+                            <h3 className="subsection-title">Zugewiesene Qualifikationen</h3>
+                            {formData.qualifikationen.length === 0 ? (
+                                <p className="hint">Noch keine Qualifikationen zugewiesen.</p>
+                            ) : (
+                                <div className="chips">
+                                    {formData.qualifikationen.map((qualification) => (
+                                        <div key={qualification} className="chip">
+                                            <span className="chip-text">{qualification}</span>
+                                            <button
+                                                type="button"
+                                                className="chip-remove"
+                                                onClick={() => removeQualification(qualification)}
+                                                aria-label={`Qualifikation entfernen: ${qualification}`}
+                                                title="Entfernen"
+                                                disabled={isSubmitting}
+                                            >
+                                                <FiTrash2 />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="subsection">
+                            <h3 className="subsection-title">Qualifikation hinzufügen</h3>
+                            <div className="field">
+                                <label htmlFor="qualificationSelect">Verfügbare Qualifikationen</label>
+
+                                {qualificationsError && (
+                                    <p className="hint field-error">Fehler beim Laden der Qualifikationen: {qualificationsError}</p>
+                                )}
+
+                                <div className="add-row">
+                                    <select
+                                        id="qualificationSelect"
+                                        className="select"
+                                        value={selectedQualification}
+                                        onChange={(event) => setSelectedQualification(event.target.value)}
+                                        disabled={isSubmitting || qualificationsLoading || selectableQualifications.length === 0}
+                                    >
+                                        <option value="">
+                                            {qualificationsLoading
+                                                ? "Lade Qualifikationen..."
+                                                : selectableQualifications.length === 0
+                                                    ? "Keine Qualifikationen verfügbar"
+                                                    : "Wählen Sie eine Qualifikation aus"}
+                                        </option>
+                                        {selectableQualifications.map((qualification) => (
+                                            <option key={qualification} value={qualification}>
+                                                {qualification}
+                                            </option>
+                                        ))}
+                                    </select>
+
+                                    <button
+                                        type="button"
+                                        className="btn-add"
+                                        onClick={addQualification}
+                                        disabled={isSubmitting || !selectedQualification || qualificationsLoading}
+                                    >
+                                        <FiPlus /> Hinzufügen
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div className="actions">
+                        <button type="button" className="btn-secondary" onClick={handleCancelClick} disabled={isSubmitting}>
+                            Abbrechen
+                        </button>
+                        <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                            {isSubmitting ? "Speichern..." : effectiveSubmitLabel}
+                        </button>
                     </div>
-                )}
-              </div>
-
-              <div className="subsection">
-                <h3 className="subsection-title">Qualifikation hinzufügen</h3>
-
-                <div className="field">
-                  <label htmlFor="qualificationSelect">Verfügbare Qualifikationen</label>
-
-                  <div className="add-row">
-                    <select
-                        id="qualificationSelect"
-                        className="select"
-                        value={selectedQualification}
-                        onChange={(e) => setSelectedQualification(e.target.value)}
-                    >
-                      <option value="">Wählen Sie eine Qualifikation aus</option>
-                      {selectableQualifications.map(q => (
-                          <option key={q} value={q}>{q}</option>
-                      ))}
-                    </select>
-
-                    <button
-                        type="button"
-                        className="btn-add"
-                        onClick={addQualification}
-                        disabled={!selectedQualification}
-                    >
-                      <FiPlus /> Hinzufügen
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Actions */}
-            <div className="actions">
-              <button type="button" className="btn-secondary" onClick={() => navigate('/employees')}>
-                Abbrechen
-              </button>
-              <button type="submit" className="btn-primary">
-                Speichern
-              </button>
+                </form>
             </div>
-          </form>
+
+            <CustomModal
+                show={showCancelConfirm}
+                onClose={() => setShowCancelConfirm(false)}
+                onSave={confirmCancel}
+                title="Änderungen verwerfen?"
+                saveButtonText="Verwerfen"
+                cancelButtonText="Weiter bearbeiten"
+                saveVariant="danger"
+            >
+                <p>Sie haben ungespeicherte Änderungen. Möchten Sie diese wirklich verwerfen?</p>
+            </CustomModal>
         </div>
-      </div>
-  );
+    );
 }
