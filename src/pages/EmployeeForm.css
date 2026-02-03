@@ -208,6 +208,35 @@
   cursor: not-allowed;
 }
 
+.add-inline-field {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.add-inline-field label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.add-inline-field input {
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #d9dde6;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #111827;
+  background: #ffffff;
+  outline: none;
+}
+
+.add-inline-field input:focus {
+  border-color: #8bb3ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
 /* Bottom actions */
 .actions {
   display: flex;

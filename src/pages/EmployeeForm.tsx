@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { CustomModal } from "../components/common/Modal";
 import { useQualificationManagement } from "../hooks/useQualificationManagement";
+import { useNotification } from "../components/common/NotificationProvider";
 import type { Employee } from "../types/Employee";
 import "./EmployeeForm.css";
 
@@ -22,6 +23,7 @@ interface EmployeeFormProps {
 
 const POSTCODE_PATTERN = /^[0-9]{5}$/;
 const PHONE_PATTERN = /^[0-9+()\-/\s]{6,20}$/;
+const CREATE_QUALIFICATION_OPTION = "__create_new__";
 
 function createInitialFormData(initialData?: EmployeeFormData | null): EmployeeFormData {
     return {
@@ -61,11 +63,16 @@ export function EmployeeForm({
         qualifications,
         loading: qualificationsLoading,
         error: qualificationsError,
+        ensureQualification,
     } = useQualificationManagement();
+    const { notify } = useNotification();
 
     const initialFormData = useMemo(() => createInitialFormData(initialData), [initialData]);
     const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
     const [selectedQualification, setSelectedQualification] = useState<string>("");
+    const [newQualificationName, setNewQualificationName] = useState("");
+    const [newQualificationError, setNewQualificationError] = useState<string | null>(null);
+    const [isCreatingQualification, setIsCreatingQualification] = useState(false);
     const [touched, setTouched] = useState<Partial<Record<EmployeeFieldName, boolean>>>({});
     const [submitAttempted, setSubmitAttempted] = useState(false);
     const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -74,6 +81,9 @@ export function EmployeeForm({
         setFormData(initialFormData);
         setTouched({});
         setSubmitAttempted(false);
+        setNewQualificationName("");
+        setNewQualificationError(null);
+        setIsCreatingQualification(false);
     }, [initialFormData]);
 
     const availableQualifications = useMemo(
@@ -103,6 +113,12 @@ export function EmployeeForm({
 
     const hasValidationErrors = Object.keys(formErrors).length > 0;
     const effectiveSubmitLabel = submitLabel ?? (isEdit ? "Änderungen speichern" : "Mitarbeiter anlegen");
+    const isCreateQualificationSelected = selectedQualification === CREATE_QUALIFICATION_OPTION;
+    const canAddQualification =
+        !isSubmitting &&
+        !isCreatingQualification &&
+        selectedQualification !== "" &&
+        (!isCreateQualificationSelected || newQualificationName.trim() !== "");
 
     const showFieldError = (field: EmployeeFieldName): boolean => {
         return Boolean(formErrors[field]) && (Boolean(touched[field]) || submitAttempted);
@@ -130,18 +146,69 @@ export function EmployeeForm({
         }));
     };
 
-    const addQualification = () => {
-        const qualification = selectedQualification.trim();
-        if (!qualification) return;
+    const addQualification = async () => {
+        if (isSubmitting || isCreatingQualification) return;
+
+        if (selectedQualification && selectedQualification !== CREATE_QUALIFICATION_OPTION) {
+            setFormData((previous) => ({
+                ...previous,
+                qualifikationen: previous.qualifikationen.some(
+                    (qualification) => qualification.toLowerCase() === selectedQualification.toLowerCase(),
+                )
+                    ? previous.qualifikationen
+                    : [...previous.qualifikationen, selectedQualification],
+            }));
+            setSelectedQualification("");
+            setNewQualificationName("");
+            setNewQualificationError(null);
+            return;
+        }
+
+        const normalizedName = newQualificationName.trim();
+        if (!normalizedName) {
+            setNewQualificationError("Bitte geben Sie eine Qualifikation ein.");
+            return;
+        }
+
+        if (formData.qualifikationen.some((qualification) => qualification.toLowerCase() === normalizedName.toLowerCase())) {
+            setNewQualificationError("Diese Qualifikation ist dem Mitarbeiter bereits zugewiesen.");
+            return;
+        }
+
+        setIsCreatingQualification(true);
+        setNewQualificationError(null);
+        const result = await ensureQualification(normalizedName);
+
+        if (!result.success) {
+            setNewQualificationError(result.error);
+            notify({
+                tone: "error",
+                title: "Qualifikation konnte nicht erstellt werden",
+                message: result.error,
+            });
+            setIsCreatingQualification(false);
+            return;
+        }
 
         setFormData((previous) => ({
             ...previous,
-            qualifikationen: previous.qualifikationen.includes(qualification)
+            qualifikationen: previous.qualifikationen.some(
+                (qualification) => qualification.toLowerCase() === result.qualification.skill.toLowerCase(),
+            )
                 ? previous.qualifikationen
-                : [...previous.qualifikationen, qualification],
+                : [...previous.qualifikationen, result.qualification.skill],
         }));
-
         setSelectedQualification("");
+        setNewQualificationName("");
+        setNewQualificationError(null);
+        notify({
+            tone: "success",
+            title: result.created
+                ? "Qualifikation erstellt und hinzugefügt"
+                : "Vorhandene Qualifikation hinzugefügt",
+            message: result.qualification.skill,
+        });
+        setIsCreatingQualification(false);
     };
 
     const handleSubmit = (event: FormEvent) => {
@@ -197,6 +264,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("vorname")}
                                     className={showFieldError("vorname") ? "input-invalid" : ""}
                                     required
+                                    placeholder={"Max Moritz"}
                                 />
                                 {showFieldError("vorname") && <p className="field-error">{formErrors.vorname}</p>}
                             </div>
@@ -212,6 +280,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("nachname")}
                                     className={showFieldError("nachname") ? "input-invalid" : ""}
                                     required
+                                    placeholder={"Mustermann"}
                                 />
                                 {showFieldError("nachname") && <p className="field-error">{formErrors.nachname}</p>}
                             </div>
@@ -227,6 +296,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("standort")}
                                     className={showFieldError("standort") ? "input-invalid" : ""}
                                     required
+                                    placeholder={"Berlin"}
                                 />
                                 {showFieldError("standort") && <p className="field-error">{formErrors.standort}</p>}
                             </div>
@@ -242,6 +312,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("street")}
                                     className={showFieldError("street") ? "input-invalid" : ""}
                                     required
+                                    placeholder={"Musterstraße"}
                                 />
                                 {showFieldError("street") && <p className="field-error">{formErrors.street}</p>}
                             </div>
@@ -259,7 +330,7 @@ export function EmployeeForm({
                                     required
                                     maxLength={5}
                                     pattern="[0-9]{5}"
-                                    placeholder="12345"
+                                    placeholder={"12345"}
                                 />
                                 {showFieldError("postcode") && <p className="field-error">{formErrors.postcode}</p>}
                             </div>
@@ -275,6 +346,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("telefonnummer")}
                                     className={showFieldError("telefonnummer") ? "input-invalid" : ""}
                                     required
+                                    placeholder={"0123 456790"}
                                 />
                                 {showFieldError("telefonnummer") && <p className="field-error">{formErrors.telefonnummer}</p>}
                             </div>
@@ -323,14 +395,19 @@ export function EmployeeForm({
                                         id="qualificationSelect"
                                         className="select"
                                         value={selectedQualification}
-                                        onChange={(event) => setSelectedQualification(event.target.value)}
-                                        disabled={isSubmitting || qualificationsLoading || selectableQualifications.length === 0}
+                                        onChange={(event) => {
+                                            const value = event.target.value;
+                                            setSelectedQualification(value);
+                                            setNewQualificationError(null);
+                                            if (value !== CREATE_QUALIFICATION_OPTION) setNewQualificationName("");
+                                        }}
+                                        disabled={isSubmitting || isCreatingQualification}
                                     >
                                         <option value="">
                                             {qualificationsLoading
                                                 ? "Lade Qualifikationen..."
                                                 : selectableQualifications.length === 0
-                                                    ? "Keine Qualifikationen verfügbar"
+                                                    ? "Keine Qualifikationen verfügbar - oder neue erstellen"
                                                     : "Wählen Sie eine Qualifikation aus"}
                                         </option>
                                         {selectableQualifications.map((qualification) => (
@@ -338,17 +415,34 @@ export function EmployeeForm({
                                                 {qualification}
                                             </option>
                                         ))}
+                                        <option value={CREATE_QUALIFICATION_OPTION}>+ Neue Qualifikation erstellen</option>
                                     </select>
 
                                     <button
                                         type="button"
                                         className="btn-add"
                                         onClick={addQualification}
-                                        disabled={isSubmitting || !selectedQualification || qualificationsLoading}
+                                        disabled={!canAddQualification}
                                     >
-                                        <FiPlus /> Hinzufügen
+                                        <FiPlus /> {isCreatingQualification ? "Erstelle..." : "Hinzufügen"}
                                     </button>
                                 </div>
+
+                                {isCreateQualificationSelected && (
+                                    <div className="add-inline-field">
+                                        <label htmlFor="newQualificationInput">Neue Qualifikation</label>
+                                        <input
+                                            type="text"
+                                            id="newQualificationInput"
+                                            name="newQualificationInput"
+                                            value={newQualificationName}
+                                            onChange={(event) => setNewQualificationName(event.target.value)}
+                                            placeholder="z.B. Kotlin"
+                                            disabled={isSubmitting || isCreatingQualification}
+                                        />
+                                        {newQualificationError && <p className="field-error">{newQualificationError}</p>}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </section>

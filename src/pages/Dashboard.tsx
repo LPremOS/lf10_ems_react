@@ -4,19 +4,15 @@ import {FiAward, FiUsers, FiArrowRight} from "react-icons/fi";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualifiactionApi } from "../hooks/useQualificationApi";
 import type { Employee as EmployeeType } from "../types/Employee";
+import type { QualificationType } from "../types/QualificationType";
 import "./Dashboard.css";
-
-interface Qualification {
-  id: string;
-  name: string;
-}
 
 const Dashboard = () => {
     const navigate = useNavigate();
     const { fetchEmployees, loading: loadingEmployees } = useEmployeeApi();
     const { fetchQualifications, loading: loadingQualifications } = useQualifiactionApi();
     const [employees, setEmployees] = useState<EmployeeType[]>([]);
-    const [qualifications, setQualifications] = useState<Qualification[]>([]);
+    const [qualifications, setQualifications] = useState<QualificationType[]>([]);
 
     useEffect(() => {
         const loadEmployees = async () => {
