@@ -35,10 +35,6 @@ type AuthHeaderResult =
     | { ok: true; headers: Record<string, string> }
     | { ok: false; error: string };
 
-type QualificationLookupResult =
-    | { ok: true; lookup: Map<string, number> }
-    | { ok: false; error: string };
-
 export type MutationResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
@@ -111,25 +107,65 @@ export function useEmployeeApi() {
         };
     }, [auth.isAuthenticated, auth.user?.access_token]);
 
-    const fetchQualificationLookup = useCallback(async (headers: Record<string, string>): Promise<QualificationLookupResult> => {
+    const runJsonRequest = useCallback(async <T,>(
+        url: string,
+        init: RequestInit,
+        actionLabel: string,
+    ): Promise<MutationResult<T>> => {
         try {
-            const response = await fetch(QUALIFICATIONS_URL, { headers });
+            const response = await fetch(url, init);
             if (!response.ok) {
-                const message = getStatusMessage(response.status, "Laden der Qualifikationen");
+                const message = getStatusMessage(response.status, actionLabel);
                 setError(message);
-                return { ok: false, error: message };
+                return { success: false, error: message };
             }
-            const qualifications = await response.json() as QualificationApiItem[];
-            return {
-                ok: true,
-                lookup: new Map(qualifications.map((qualification) => [qualification.skill, qualification.id])),
-            };
+
+            const data = await response.json() as T;
+            return { success: true, data };
         } catch (err) {
             const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
             setError(message);
-            return { ok: false, error: message };
+            return { success: false, error: message };
         }
     }, []);
+
+    const runNoContentRequest = useCallback(async (
+        url: string,
+        init: RequestInit,
+        actionLabel: string,
+    ): Promise<MutationResult<null>> => {
+        try {
+            const response = await fetch(url, init);
+            if (!response.ok) {
+                const message = getStatusMessage(response.status, actionLabel);
+                setError(message);
+                return { success: false, error: message };
+            }
+
+            return { success: true, data: null };
+        } catch (err) {
+            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
+            setError(message);
+            return { success: false, error: message };
+        }
+    }, []);
+
+    const fetchQualificationLookup = useCallback(async (headers: Record<string, string>): Promise<MutationResult<Map<string, number>>> => {
+        const result = await runJsonRequest<QualificationApiItem[]>(
+            QUALIFICATIONS_URL,
+            { headers },
+            "Laden der Qualifikationen",
+        );
+
+        if (!result.success) {
+            return result;
+        }
+
+        return {
+            success: true,
+            data: new Map(result.data.map((qualification) => [qualification.skill, qualification.id])),
+        };
+    }, [runJsonRequest]);
 
     const fetchEmployees = useCallback(async () => {
         setLoading(true);
@@ -141,23 +177,21 @@ export function useEmployeeApi() {
                 return [];
             }
 
-            const response = await fetch(EMPLOYEES_URL, { headers: authResult.headers });
-            if (!response.ok) {
-                const message = getStatusMessage(response.status, "Laden der Mitarbeiter");
-                setError(message);
+            const result = await runJsonRequest<EmployeeApiResponse[]>(
+                EMPLOYEES_URL,
+                { headers: authResult.headers },
+                "Laden der Mitarbeiter",
+            );
+
+            if (!result.success) {
                 return [];
             }
 
-            const data = await response.json() as EmployeeApiResponse[];
-            return data.map(fromApiFormat);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
-            setError(message);
-            return [];
+            return result.data.map(fromApiFormat);
         } finally {
             setLoading(false);
         }
-    }, [getAuthHeaders]);
+    }, [getAuthHeaders, runJsonRequest]);
 
     const fetchEmployeeById = useCallback(async (id: string) => {
         setLoading(true);
@@ -169,23 +203,21 @@ export function useEmployeeApi() {
                 return null;
             }
 
-            const response = await fetch(`${EMPLOYEES_URL}/${id}`, { headers: authResult.headers });
-            if (!response.ok) {
-                const message = getStatusMessage(response.status, "Laden des Mitarbeiters");
-                setError(message);
+            const result = await runJsonRequest<EmployeeApiResponse>(
+                `${EMPLOYEES_URL}/${id}`,
+                { headers: authResult.headers },
+                "Laden des Mitarbeiters",
+            );
+
+            if (!result.success) {
                 return null;
             }
 
-            const data = await response.json() as EmployeeApiResponse;
-            return fromApiFormat(data);
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
-            setError(message);
-            return null;
+            return fromApiFormat(result.data);
         } finally {
             setLoading(false);
         }
-    }, [getAuthHeaders]);
+    }, [getAuthHeaders, runJsonRequest]);
 
     const addEmployee = useCallback(async (employee: Omit<Employee, "id">): Promise<MutationResult<Employee>> => {
         setLoading(true);
@@ -200,35 +232,32 @@ export function useEmployeeApi() {
             let qualificationLookup = new Map<string, number>();
             if (employee.qualifikationen.length > 0) {
                 const lookupResult = await fetchQualificationLookup(authResult.headers);
-                if (!lookupResult.ok) {
-                    return { success: false, error: lookupResult.error };
+                if (!lookupResult.success) {
+                    return lookupResult;
                 }
-                qualificationLookup = lookupResult.lookup;
+                qualificationLookup = lookupResult.data;
             }
 
             const payload = toApiFormat(employee, qualificationLookup);
-            const response = await fetch(EMPLOYEES_URL, {
-                method: "POST",
-                headers: authResult.headers,
-                body: JSON.stringify(payload),
-            });
+            const result = await runJsonRequest<EmployeeApiResponse>(
+                EMPLOYEES_URL,
+                {
+                    method: "POST",
+                    headers: authResult.headers,
+                    body: JSON.stringify(payload),
+                },
+                "Hinzufügen des Mitarbeiters",
+            );
 
-            if (!response.ok) {
-                const message = getStatusMessage(response.status, "Hinzufügen des Mitarbeiters");
-                setError(message);
-                return { success: false, error: message };
+            if (!result.success) {
+                return result;
             }
 
-            const result = await response.json() as EmployeeApiResponse;
-            return { success: true, data: fromApiFormat(result) };
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
-            setError(message);
-            return { success: false, error: message };
+            return { success: true, data: fromApiFormat(result.data) };
         } finally {
             setLoading(false);
         }
-    }, [fetchQualificationLookup, getAuthHeaders]);
+    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest]);
 
     const updateEmployee = useCallback(async (id: string, employee: Partial<Employee>): Promise<MutationResult<Employee>> => {
         setLoading(true);
@@ -244,35 +273,32 @@ export function useEmployeeApi() {
             const qualificationList = employee.qualifikationen;
             if (Array.isArray(qualificationList) && qualificationList.length > 0) {
                 const lookupResult = await fetchQualificationLookup(authResult.headers);
-                if (!lookupResult.ok) {
-                    return { success: false, error: lookupResult.error };
+                if (!lookupResult.success) {
+                    return lookupResult;
                 }
-                qualificationLookup = lookupResult.lookup;
+                qualificationLookup = lookupResult.data;
             }
 
             const payload = toApiFormat(employee, qualificationLookup);
-            const response = await fetch(`${EMPLOYEES_URL}/${id}`, {
-                method: "PUT",
-                headers: authResult.headers,
-                body: JSON.stringify(payload),
-            });
+            const result = await runJsonRequest<EmployeeApiResponse>(
+                `${EMPLOYEES_URL}/${id}`,
+                {
+                    method: "PUT",
+                    headers: authResult.headers,
+                    body: JSON.stringify(payload),
+                },
+                "Speichern der Änderungen",
+            );
 
-            if (!response.ok) {
-                const message = getStatusMessage(response.status, "Speichern der Änderungen");
-                setError(message);
-                return { success: false, error: message };
+            if (!result.success) {
+                return result;
             }
 
-            const result = await response.json() as EmployeeApiResponse;
-            return { success: true, data: fromApiFormat(result) };
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
-            setError(message);
-            return { success: false, error: message };
+            return { success: true, data: fromApiFormat(result.data) };
         } finally {
             setLoading(false);
         }
-    }, [fetchQualificationLookup, getAuthHeaders]);
+    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest]);
 
     const deleteEmployee = useCallback(async (id: string): Promise<MutationResult<null>> => {
         setLoading(true);
@@ -284,26 +310,18 @@ export function useEmployeeApi() {
                 return { success: false, error: authResult.error };
             }
 
-            const response = await fetch(`${EMPLOYEES_URL}/${id}`, {
-                method: "DELETE",
-                headers: authResult.headers,
-            });
-
-            if (!response.ok) {
-                const message = getStatusMessage(response.status, "Löschen des Mitarbeiters");
-                setError(message);
-                return { success: false, error: message };
-            }
-
-            return { success: true, data: null };
-        } catch (err) {
-            const message = err instanceof Error ? err.message : "Ein Fehler ist aufgetreten.";
-            setError(message);
-            return { success: false, error: message };
+            return await runNoContentRequest(
+                `${EMPLOYEES_URL}/${id}`,
+                {
+                    method: "DELETE",
+                    headers: authResult.headers,
+                },
+                "Löschen des Mitarbeiters",
+            );
         } finally {
             setLoading(false);
         }
-    }, [getAuthHeaders]);
+    }, [getAuthHeaders, runNoContentRequest]);
 
     return {
         fetchEmployees,

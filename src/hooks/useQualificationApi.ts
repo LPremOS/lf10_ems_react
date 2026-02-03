@@ -21,7 +21,7 @@ function getStatusMessage(status: number, actionLabel: string): string {
     return `${actionLabel} fehlgeschlagen.`;
 }
 
-export function useQualifiactionApi() {
+export function useQualificationApi() {
     const auth = useAuth();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

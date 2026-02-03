@@ -101,10 +101,6 @@
   gap: 0.5rem;
 }
 
-.detail-item.full-width {
-  grid-column: 1 / -1;
-}
-
 .detail-item label {
   font-size: 0.875rem;
   font-weight: 500;

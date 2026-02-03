@@ -1,9 +1,8 @@
-import { EmployeeForm } from "./EmployeeForm";
+import { EmployeeForm, type EmployeeFormData } from "./EmployeeForm";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useNotification } from "../components/common/NotificationProvider";
-import type { Employee } from "../types/Employee";
 
 export function EmployeeAdd() {
   const navigate = useNavigate();
@@ -12,29 +11,34 @@ export function EmployeeAdd() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleSubmit = async (data: Omit<Employee, 'id'>) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    setApiError(null);
-
-    const result = await addEmployee(data);
-    if (result.success) {
-      notify({
-        tone: "success",
-        title: "Mitarbeiter erfolgreich angelegt",
-      });
-      setIsSubmitting(false);
-      navigate('/employees');
+  const handleSubmit = async (data: EmployeeFormData) => {
+    if (isSubmitting) {
       return;
     }
 
-    setApiError(result.error);
-    notify({
-      tone: "error",
-      title: "Mitarbeiter konnte nicht angelegt werden",
-      message: result.error,
-    });
-    setIsSubmitting(false);
+    setIsSubmitting(true);
+    setApiError(null);
+
+    try {
+      const result = await addEmployee(data);
+      if (result.success) {
+        notify({
+          tone: "success",
+          title: "Mitarbeiter erfolgreich angelegt",
+        });
+        navigate("/employees");
+        return;
+      }
+
+      setApiError(result.error);
+      notify({
+        tone: "error",
+        title: "Mitarbeiter konnte nicht angelegt werden",
+        message: result.error,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

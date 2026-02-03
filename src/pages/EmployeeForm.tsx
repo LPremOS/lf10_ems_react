@@ -8,7 +8,7 @@ import { useNotification } from "../components/common/NotificationProvider";
 import type { Employee } from "../types/Employee";
 import "./EmployeeForm.css";
 
-type EmployeeFormData = Omit<Employee, "id">;
+export type EmployeeFormData = Omit<Employee, "id">;
 type EmployeeFieldName = Exclude<keyof EmployeeFormData, "qualifikationen">;
 type FormErrors = Partial<Record<EmployeeFieldName, string>>;
 
@@ -24,6 +24,10 @@ interface EmployeeFormProps {
 const POSTCODE_PATTERN = /^[0-9]{5}$/;
 const PHONE_PATTERN = /^[0-9+()\-/\s]{6,20}$/;
 const CREATE_QUALIFICATION_OPTION = "__create_new__";
+
+function normalizeQualificationName(value: string): string {
+    return value.trim();
+}
 
 function createInitialFormData(initialData?: EmployeeFormData | null): EmployeeFormData {
     return {
@@ -81,6 +85,7 @@ export function EmployeeForm({
         setFormData(initialFormData);
         setTouched({});
         setSubmitAttempted(false);
+        setSelectedQualification("");
         setNewQualificationName("");
         setNewQualificationError(null);
         setIsCreatingQualification(false);
@@ -112,11 +117,11 @@ export function EmployeeForm({
     }, [formData, initialFormData]);
 
     const hasValidationErrors = Object.keys(formErrors).length > 0;
+    const isBusy = isSubmitting || isCreatingQualification;
     const effectiveSubmitLabel = submitLabel ?? (isEdit ? "Änderungen speichern" : "Mitarbeiter anlegen");
     const isCreateQualificationSelected = selectedQualification === CREATE_QUALIFICATION_OPTION;
     const canAddQualification =
-        !isSubmitting &&
-        !isCreatingQualification &&
+        !isBusy &&
         selectedQualification !== "" &&
         (!isCreateQualificationSelected || newQualificationName.trim() !== "");
 
@@ -126,9 +131,10 @@ export function EmployeeForm({
 
     const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = event.target;
+        const fieldName = name as EmployeeFieldName;
         setFormData((previous) => ({
             ...previous,
-            [name]: value,
+            [fieldName]: value,
         }));
     };
 
@@ -147,7 +153,7 @@ export function EmployeeForm({
     };
 
     const addQualification = async () => {
-        if (isSubmitting || isCreatingQualification) return;
+        if (isBusy) return;
 
         if (selectedQualification && selectedQualification !== CREATE_QUALIFICATION_OPTION) {
             setFormData((previous) => ({
@@ -164,7 +170,7 @@ export function EmployeeForm({
             return;
         }
 
-        const normalizedName = newQualificationName.trim();
+        const normalizedName = normalizeQualificationName(newQualificationName);
         if (!normalizedName) {
             setNewQualificationError("Bitte geben Sie eine Qualifikation ein.");
             return;
@@ -177,38 +183,40 @@ export function EmployeeForm({
 
         setIsCreatingQualification(true);
         setNewQualificationError(null);
-        const result = await ensureQualification(normalizedName);
+        try {
+            const result = await ensureQualification(normalizedName);
 
-        if (!result.success) {
-            setNewQualificationError(result.error);
+            if (!result.success) {
+                setNewQualificationError(result.error);
+                notify({
+                    tone: "error",
+                    title: "Qualifikation konnte nicht erstellt werden",
+                    message: result.error,
+                });
+                return;
+            }
+
+            setFormData((previous) => ({
+                ...previous,
+                qualifikationen: previous.qualifikationen.some(
+                    (qualification) => qualification.toLowerCase() === result.qualification.skill.toLowerCase(),
+                )
+                    ? previous.qualifikationen
+                    : [...previous.qualifikationen, result.qualification.skill],
+            }));
+            setSelectedQualification("");
+            setNewQualificationName("");
+            setNewQualificationError(null);
             notify({
-                tone: "error",
-                title: "Qualifikation konnte nicht erstellt werden",
-                message: result.error,
+                tone: "success",
+                title: result.created
+                    ? "Qualifikation erstellt und hinzugefügt"
+                    : "Vorhandene Qualifikation hinzugefügt",
+                message: result.qualification.skill,
             });
+        } finally {
             setIsCreatingQualification(false);
-            return;
         }
-
-        setFormData((previous) => ({
-            ...previous,
-            qualifikationen: previous.qualifikationen.some(
-                (qualification) => qualification.toLowerCase() === result.qualification.skill.toLowerCase(),
-            )
-                ? previous.qualifikationen
-                : [...previous.qualifikationen, result.qualification.skill],
-        }));
-        setSelectedQualification("");
-        setNewQualificationName("");
-        setNewQualificationError(null);
-        notify({
-            tone: "success",
-            title: result.created
-                ? "Qualifikation erstellt und hinzugefügt"
-                : "Vorhandene Qualifikation hinzugefügt",
-            message: result.qualification.skill,
-        });
-        setIsCreatingQualification(false);
     };
 
     const handleSubmit = (event: FormEvent) => {
@@ -219,7 +227,7 @@ export function EmployeeForm({
     };
 
     const handleCancelClick = () => {
-        if (isSubmitting) return;
+        if (isBusy) return;
         if (!isDirty) {
             navigate("/employees");
             return;
@@ -264,7 +272,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("vorname")}
                                     className={showFieldError("vorname") ? "input-invalid" : ""}
                                     required
-                                    placeholder={"Max Moritz"}
+                                    placeholder="Max Moritz"
                                 />
                                 {showFieldError("vorname") && <p className="field-error">{formErrors.vorname}</p>}
                             </div>
@@ -280,7 +288,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("nachname")}
                                     className={showFieldError("nachname") ? "input-invalid" : ""}
                                     required
-                                    placeholder={"Mustermann"}
+                                    placeholder="Mustermann"
                                 />
                                 {showFieldError("nachname") && <p className="field-error">{formErrors.nachname}</p>}
                             </div>
@@ -296,7 +304,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("standort")}
                                     className={showFieldError("standort") ? "input-invalid" : ""}
                                     required
-                                    placeholder={"Berlin"}
+                                    placeholder="Berlin"
                                 />
                                 {showFieldError("standort") && <p className="field-error">{formErrors.standort}</p>}
                             </div>
@@ -312,7 +320,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("street")}
                                     className={showFieldError("street") ? "input-invalid" : ""}
                                     required
-                                    placeholder={"Musterstraße"}
+                                    placeholder="Musterstraße"
                                 />
                                 {showFieldError("street") && <p className="field-error">{formErrors.street}</p>}
                             </div>
@@ -330,7 +338,7 @@ export function EmployeeForm({
                                     required
                                     maxLength={5}
                                     pattern="[0-9]{5}"
-                                    placeholder={"12345"}
+                                    placeholder="12345"
                                 />
                                 {showFieldError("postcode") && <p className="field-error">{formErrors.postcode}</p>}
                             </div>
@@ -346,7 +354,7 @@ export function EmployeeForm({
                                     onBlur={() => markFieldTouched("telefonnummer")}
                                     className={showFieldError("telefonnummer") ? "input-invalid" : ""}
                                     required
-                                    placeholder={"0123 456790"}
+                                    placeholder="0123 456790"
                                 />
                                 {showFieldError("telefonnummer") && <p className="field-error">{formErrors.telefonnummer}</p>}
                             </div>
@@ -371,7 +379,7 @@ export function EmployeeForm({
                                                 onClick={() => removeQualification(qualification)}
                                                 aria-label={`Qualifikation entfernen: ${qualification}`}
                                                 title="Entfernen"
-                                                disabled={isSubmitting}
+                                                disabled={isBusy}
                                             >
                                                 <FiTrash2 />
                                             </button>
@@ -399,9 +407,11 @@ export function EmployeeForm({
                                             const value = event.target.value;
                                             setSelectedQualification(value);
                                             setNewQualificationError(null);
-                                            if (value !== CREATE_QUALIFICATION_OPTION) setNewQualificationName("");
+                                            if (value !== CREATE_QUALIFICATION_OPTION) {
+                                                setNewQualificationName("");
+                                            }
                                         }}
-                                        disabled={isSubmitting || isCreatingQualification}
+                                        disabled={isBusy}
                                     >
                                         <option value="">
                                             {qualificationsLoading
@@ -438,7 +448,7 @@ export function EmployeeForm({
                                             value={newQualificationName}
                                             onChange={(event) => setNewQualificationName(event.target.value)}
                                             placeholder="z.B. Kotlin"
-                                            disabled={isSubmitting || isCreatingQualification}
+                                            disabled={isBusy}
                                         />
                                         {newQualificationError && <p className="field-error">{newQualificationError}</p>}
                                     </div>
@@ -448,10 +458,10 @@ export function EmployeeForm({
                     </section>
 
                     <div className="actions">
-                        <button type="button" className="btn-secondary" onClick={handleCancelClick} disabled={isSubmitting}>
+                        <button type="button" className="btn-secondary" onClick={handleCancelClick} disabled={isBusy}>
                             Abbrechen
                         </button>
-                        <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                        <button type="submit" className="btn-primary" disabled={isBusy}>
                             {isSubmitting ? "Speichern..." : effectiveSubmitLabel}
                         </button>
                     </div>

@@ -1,67 +1,88 @@
-import { useEffect, useState } from "react";
-import { useQualifiactionApi } from "./useQualificationApi";
+import { useCallback, useEffect, useState } from "react";
+import { useQualificationApi } from "./useQualificationApi";
 import type { QualificationType } from "../types/QualificationType";
 
 export type EnsureQualificationResult =
     | { success: true; qualification: QualificationType; created: boolean }
     | { success: false; error: string };
 
+type ModalMode = "add" | "edit" | "delete";
+
 export function useQualificationManagement() {
-    const {fetchQualifications, addQualification, deleteQualification, editQualification, loading, error} = useQualifiactionApi();
+    const {
+        fetchQualifications,
+        addQualification,
+        deleteQualification,
+        editQualification,
+        loading,
+        error,
+    } = useQualificationApi();
+
     const [qualifications, setQualifications] = useState<QualificationType[]>([]);
     const [showModal, setShowModal] = useState(false);
-    const [skillInput, setSkillInput] = useState('');
-    const [modalMode, setModalMode] = useState<'add' | 'edit' | 'delete'>('add');
+    const [skillInput, setSkillInput] = useState("");
+    const [modalMode, setModalMode] = useState<ModalMode>("add");
     const [selectedQualification, setSelectedQualification] = useState<QualificationType | null>(null);
 
-    const loadQualifications = async (): Promise<QualificationType[]> => {
+    const loadQualifications = useCallback(async (): Promise<QualificationType[]> => {
         const data = await fetchQualifications();
-        if (Array.isArray(data)) {
-            setQualifications(data);
-            return data;
+        if (!Array.isArray(data)) {
+            return [];
         }
-        return [];
-    };
+
+        setQualifications(data);
+        return data;
+    }, [fetchQualifications]);
 
     useEffect(() => {
         loadQualifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadQualifications]);
 
     const openAddModal = () => {
-        setModalMode('add');
+        setModalMode("add");
         setSkillInput("");
+        setSelectedQualification(null);
         setShowModal(true);
-    }
-    const openEditModal = (q: QualificationType) => {
-        setModalMode('edit');
-        setSkillInput(q.skill);
-        setSelectedQualification(q);
+    };
+
+    const openEditModal = (qualification: QualificationType) => {
+        setModalMode("edit");
+        setSkillInput(qualification.skill);
+        setSelectedQualification(qualification);
         setShowModal(true);
-    }
-    const openDeleteModal = (q: QualificationType) => {
-        setModalMode('delete');
-        setSelectedQualification(q);
+    };
+
+    const openDeleteModal = (qualification: QualificationType) => {
+        setModalMode("delete");
+        setSkillInput("");
+        setSelectedQualification(qualification);
         setShowModal(true);
-    }
+    };
+
+    const closeModal = () => {
+        setShowModal(false);
+        setSkillInput("");
+        setSelectedQualification(null);
+    };
 
     const saveQualification = async () => {
         const normalizedSkill = skillInput.trim();
-        let resultSuccess = true;
 
-        if (modalMode === 'add') {
+        if (modalMode === "add") {
             const result = await addQualification(normalizedSkill);
-            resultSuccess = result.success;
-        } else if (modalMode === 'edit' && selectedQualification) {
+            if (!result.success) {
+                return;
+            }
+        } else if (modalMode === "edit" && selectedQualification) {
             const result = await editQualification(selectedQualification.id, normalizedSkill);
-            resultSuccess = result.success;
-        } else if (modalMode === 'delete' && selectedQualification) {
+            if (!result.success) {
+                return;
+            }
+        } else if (modalMode === "delete" && selectedQualification) {
             const result = await deleteQualification(selectedQualification.id);
-            resultSuccess = result.success;
-        }
-
-        if (!resultSuccess) {
-            return;
+            if (!result.success) {
+                return;
+            }
         }
 
         closeModal();
@@ -75,10 +96,16 @@ export function useQualificationManagement() {
         }
 
         const existingQualification = qualifications.find(
-            (qualification) => qualification.skill.toLowerCase() === normalizedSkill.toLowerCase(),
+            (qualification) =>
+                qualification.skill.toLowerCase() === normalizedSkill.toLowerCase(),
         );
+
         if (existingQualification) {
-            return { success: true, qualification: existingQualification, created: false };
+            return {
+                success: true,
+                qualification: existingQualification,
+                created: false,
+            };
         }
 
         const createResult = await addQualification(normalizedSkill);
@@ -88,7 +115,8 @@ export function useQualificationManagement() {
 
         const refreshedQualifications = await loadQualifications();
         const createdQualification = refreshedQualifications.find(
-            (qualification) => qualification.skill.toLowerCase() === normalizedSkill.toLowerCase(),
+            (qualification) =>
+                qualification.skill.toLowerCase() === normalizedSkill.toLowerCase(),
         );
 
         if (createdQualification) {
@@ -101,21 +129,18 @@ export function useQualificationManagement() {
                 ? previous
                 : [...previous, fallbackQualification],
         );
+
         return { success: true, qualification: fallbackQualification, created: true };
     };
 
-    const closeModal = () => {
-        setShowModal(false);
-    }
-
     const getModalTitle = () => {
-        if (modalMode === 'add') return "Neue Qualifikation";
-        if (modalMode === 'edit') return "Qualifikation bearbeiten";
+        if (modalMode === "add") return "Neue Qualifikation";
+        if (modalMode === "edit") return "Qualifikation bearbeiten";
         return "Qualifikation löschen";
     };
 
     const getModalSaveText = () => {
-        return modalMode === 'delete' ? "Löschen" : "Speichern";
+        return modalMode === "delete" ? "Löschen" : "Speichern";
     };
 
     return {
@@ -134,6 +159,6 @@ export function useQualificationManagement() {
         saveQualification,
         ensureQualification,
         getModalTitle,
-        getModalSaveText
+        getModalSaveText,
     };
 }
