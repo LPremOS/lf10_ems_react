@@ -1,9 +1,10 @@
 import { AiOutlineEye, AiOutlineEdit, AiOutlineDelete } from 'react-icons/ai';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { useEffect, useMemo, useState } from 'react';
+import { FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEmployeeManagement } from '../hooks/useEmployeeManagement';
 import { useEmployeeApi } from '../hooks/useEmployeeApi';
+import { useDebounce } from '../hooks/useDebounce';
 import { Loader } from '../components/common/Loader';
 import { CustomModal } from '../components/common/Modal';
 import { useNotification } from '../components/common/NotificationProvider';
@@ -11,6 +12,8 @@ import './EmployeeOverview.css';
 
 const ITEMS_PER_PAGE = 8;
 const MAX_VISIBLE_PAGE_BUTTONS = 5;
+const FILTER_DEBOUNCE_MS = 300;
+const OVERVIEW_STATE_KEY = 'employeeOverview.uiState.v1';
 
 type EmployeeFilters = {
   vorname: string;
@@ -18,6 +21,55 @@ type EmployeeFilters = {
   standort: string;
   qualifikation: string;
 };
+type FilterKey = keyof EmployeeFilters;
+
+type SortKey = 'vorname' | 'nachname' | 'standort';
+type SortDirection = 'asc' | 'desc';
+type PersistedOverviewState = {
+  filters: EmployeeFilters;
+  sortKey: SortKey | null;
+  sortDirection: SortDirection;
+  currentPage: number;
+};
+
+function loadPersistedOverviewState(): PersistedOverviewState | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const rawState = window.localStorage.getItem(OVERVIEW_STATE_KEY);
+    if (!rawState) return null;
+    const parsed = JSON.parse(rawState) as Partial<PersistedOverviewState>;
+
+    const filters = parsed.filters;
+    const hasValidFilters =
+      typeof filters?.vorname === 'string' &&
+      typeof filters?.nachname === 'string' &&
+      typeof filters?.standort === 'string' &&
+      typeof filters?.qualifikation === 'string';
+    const hasValidSortKey =
+      parsed.sortKey === null || parsed.sortKey === 'vorname' || parsed.sortKey === 'nachname' || parsed.sortKey === 'standort';
+    const hasValidSortDirection = parsed.sortDirection === 'asc' || parsed.sortDirection === 'desc';
+    const hasValidPage = Number.isInteger(parsed.currentPage) && (parsed.currentPage ?? 0) > 0;
+
+    if (!hasValidFilters || !hasValidSortKey || !hasValidSortDirection || !hasValidPage) {
+      return null;
+    }
+
+    return {
+      filters: {
+        vorname: filters.vorname,
+        nachname: filters.nachname,
+        standort: filters.standort,
+        qualifikation: filters.qualifikation,
+      },
+      sortKey: (parsed.sortKey ?? null) as SortKey | null,
+      sortDirection: parsed.sortDirection as SortDirection,
+      currentPage: parsed.currentPage as number,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function getVisiblePageNumbers(totalPages: number, currentPage: number): number[] {
   if (totalPages <= MAX_VISIBLE_PAGE_BUTTONS) {
@@ -41,21 +93,23 @@ export function EmployeeOverview() {
   const { employees, loading, error, refreshEmployees } = useEmployeeManagement();
   const { deleteEmployee } = useEmployeeApi();
   const { notify } = useNotification();
+  const persistedState = useMemo(() => loadPersistedOverviewState(), []);
   const [employeeToDelete, setEmployeeToDelete] = useState<{ id: string; name: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filterDraft, setFilterDraft] = useState<EmployeeFilters>({
-    vorname: '',
-    nachname: '',
-    standort: '',
-    qualifikation: '',
+  const [currentPage, setCurrentPage] = useState(persistedState?.currentPage ?? 1);
+  const [filters, setFilters] = useState<EmployeeFilters>({
+    vorname: persistedState?.filters.vorname ?? '',
+    nachname: persistedState?.filters.nachname ?? '',
+    standort: persistedState?.filters.standort ?? '',
+    qualifikation: persistedState?.filters.qualifikation ?? '',
   });
-  const [activeFilters, setActiveFilters] = useState<EmployeeFilters>({
-    vorname: '',
-    nachname: '',
-    standort: '',
-    qualifikation: '',
-  });
+  const [sortKey, setSortKey] = useState<SortKey | null>(persistedState?.sortKey ?? null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(persistedState?.sortDirection ?? 'asc');
+  const hasInitializedFilterEffects = useRef(false);
+
+  const debouncedVorname = useDebounce(filters.vorname, FILTER_DEBOUNCE_MS);
+  const debouncedNachname = useDebounce(filters.nachname, FILTER_DEBOUNCE_MS);
+  const debouncedStandort = useDebounce(filters.standort, FILTER_DEBOUNCE_MS);
 
   const qualificationOptions = useMemo(() => {
     const allQualifications = employees.flatMap((employee) => employee.qualifikationen ?? []);
@@ -63,18 +117,32 @@ export function EmployeeOverview() {
     return uniqueQualifications.sort((a, b) => a.localeCompare(b, 'de'));
   }, [employees]);
 
-  const hasActiveFilters = useMemo(() => {
-    return Object.values(activeFilters).some((value) => value.trim() !== '');
-  }, [activeFilters]);
-  const hasDraftFilters = useMemo(() => {
-    return Object.values(filterDraft).some((value) => value.trim() !== '');
-  }, [filterDraft]);
+  const hasFilters = useMemo(() => {
+    return Object.values(filters).some((value) => value.trim() !== '');
+  }, [filters]);
+
+  const activeFilterChips = useMemo(() => {
+    const filterLabels: Record<FilterKey, string> = {
+      vorname: 'Vorname',
+      nachname: 'Nachname',
+      standort: 'Ort',
+      qualifikation: 'Qualifikation',
+    };
+
+    return (Object.keys(filters) as FilterKey[])
+      .filter((key) => filters[key].trim() !== '')
+      .map((key) => ({
+        key,
+        label: filterLabels[key],
+        value: filters[key].trim(),
+      }));
+  }, [filters]);
 
   const filteredEmployees = useMemo(() => {
-    const normalizedVorname = activeFilters.vorname.trim().toLowerCase();
-    const normalizedNachname = activeFilters.nachname.trim().toLowerCase();
-    const normalizedStandort = activeFilters.standort.trim().toLowerCase();
-    const normalizedQualifikation = activeFilters.qualifikation.trim().toLowerCase();
+    const normalizedVorname = debouncedVorname.trim().toLowerCase();
+    const normalizedNachname = debouncedNachname.trim().toLowerCase();
+    const normalizedStandort = debouncedStandort.trim().toLowerCase();
+    const normalizedQualifikation = filters.qualifikation.trim().toLowerCase();
 
     return employees.filter((employee) => {
       const matchesVorname =
@@ -91,10 +159,29 @@ export function EmployeeOverview() {
 
       return matchesVorname && matchesNachname && matchesStandort && matchesQualifikation;
     });
-  }, [activeFilters, employees]);
+  }, [debouncedNachname, debouncedStandort, debouncedVorname, employees, filters.qualifikation]);
 
-  const totalEmployees = filteredEmployees.length;
+  const sortedEmployees = useMemo(() => {
+    if (!sortKey) {
+      return filteredEmployees;
+    }
+
+    const multiplier = sortDirection === 'asc' ? 1 : -1;
+    return [...filteredEmployees].sort((a, b) => {
+      return a[sortKey].localeCompare(b[sortKey], 'de', { sensitivity: 'base' }) * multiplier;
+    });
+  }, [filteredEmployees, sortDirection, sortKey]);
+
+  const totalEmployees = sortedEmployees.length;
   const totalPages = Math.max(1, Math.ceil(totalEmployees / ITEMS_PER_PAGE));
+
+  useEffect(() => {
+    if (!hasInitializedFilterEffects.current) {
+      hasInitializedFilterEffects.current = true;
+      return;
+    }
+    setCurrentPage(1);
+  }, [debouncedVorname, debouncedNachname, debouncedStandort, filters.qualifikation]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -102,11 +189,21 @@ export function EmployeeOverview() {
     }
   }, [currentPage, totalPages]);
 
+  useEffect(() => {
+    const persistedValue: PersistedOverviewState = {
+      filters,
+      sortKey,
+      sortDirection,
+      currentPage,
+    };
+    window.localStorage.setItem(OVERVIEW_STATE_KEY, JSON.stringify(persistedValue));
+  }, [filters, sortKey, sortDirection, currentPage]);
+
   const paginatedEmployees = useMemo(() => {
     const start = (currentPage - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return filteredEmployees.slice(start, end);
-  }, [currentPage, filteredEmployees]);
+    return sortedEmployees.slice(start, end);
+  }, [currentPage, sortedEmployees]);
 
   const visiblePageNumbers = useMemo(
     () => getVisiblePageNumbers(totalPages, currentPage),
@@ -118,21 +215,37 @@ export function EmployeeOverview() {
     setEmployeeToDelete(null);
   };
 
-  const applyFilters = () => {
-    setActiveFilters(filterDraft);
-    setCurrentPage(1);
-  };
-
   const resetFilters = () => {
-    const clearedFilters: EmployeeFilters = {
+    setFilters({
       vorname: '',
       nachname: '',
       standort: '',
       qualifikation: '',
-    };
-    setFilterDraft(clearedFilters);
-    setActiveFilters(clearedFilters);
+    });
     setCurrentPage(1);
+  };
+
+  const clearSingleFilter = (key: FilterKey) => {
+    setFilters((previous) => ({
+      ...previous,
+      [key]: '',
+    }));
+    setCurrentPage(1);
+  };
+
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection((previous) => (previous === 'asc' ? 'desc' : 'asc'));
+      return;
+    }
+
+    setSortKey(key);
+    setSortDirection('asc');
+  };
+
+  const getSortIndicator = (key: SortKey) => {
+    if (sortKey !== key) return '';
+    return sortDirection === 'asc' ? ' ▲' : ' ▼';
   };
 
   const handleDelete = async () => {
@@ -195,8 +308,8 @@ export function EmployeeOverview() {
             <input
               type="text"
               placeholder="Vorname eingeben"
-              value={filterDraft.vorname}
-              onChange={(event) => setFilterDraft((previous) => ({ ...previous, vorname: event.target.value }))}
+              value={filters.vorname}
+              onChange={(event) => setFilters((previous) => ({ ...previous, vorname: event.target.value }))}
             />
           </div>
           <div className="filter-group">
@@ -204,8 +317,8 @@ export function EmployeeOverview() {
             <input
               type="text"
               placeholder="Nachname eingeben"
-              value={filterDraft.nachname}
-              onChange={(event) => setFilterDraft((previous) => ({ ...previous, nachname: event.target.value }))}
+              value={filters.nachname}
+              onChange={(event) => setFilters((previous) => ({ ...previous, nachname: event.target.value }))}
             />
           </div>
           <div className="filter-group">
@@ -213,15 +326,15 @@ export function EmployeeOverview() {
             <input
               type="text"
               placeholder="Ort eingeben"
-              value={filterDraft.standort}
-              onChange={(event) => setFilterDraft((previous) => ({ ...previous, standort: event.target.value }))}
+              value={filters.standort}
+              onChange={(event) => setFilters((previous) => ({ ...previous, standort: event.target.value }))}
             />
           </div>
           <div className="filter-group">
             <label>Qualifikation</label>
             <select
-              value={filterDraft.qualifikation}
-              onChange={(event) => setFilterDraft((previous) => ({ ...previous, qualifikation: event.target.value }))}
+              value={filters.qualifikation}
+              onChange={(event) => setFilters((previous) => ({ ...previous, qualifikation: event.target.value }))}
             >
               <option value="">Qualifikation auswählen</option>
               {qualificationOptions.map((qualification) => (
@@ -236,21 +349,51 @@ export function EmployeeOverview() {
           <button
             className="btn-filter btn-filter-reset"
             onClick={resetFilters}
-            disabled={!hasActiveFilters && !hasDraftFilters}
+            disabled={!hasFilters}
           >
             Filter zurücksetzen
           </button>
-          <button className="btn-filter" onClick={applyFilters}>Filter anwenden</button>
         </div>
+
+        {hasFilters && (
+          <div className="filter-chip-list">
+            {activeFilterChips.map((chip) => (
+              <span key={chip.key} className="filter-chip">
+                <span>{chip.label}: {chip.value}</span>
+                <button
+                  type="button"
+                  className="filter-chip-remove"
+                  onClick={() => clearSingleFilter(chip.key)}
+                  aria-label={`${chip.label} Filter entfernen`}
+                  title="Filter entfernen"
+                >
+                  <FiX />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="table-container">
         <table className="employee-table">
           <thead>
             <tr>
-              <th>Vorname</th>
-              <th>Nachname</th>
-              <th>Ort</th>
+              <th>
+                <button className="table-sort-button" onClick={() => handleSort('vorname')}>
+                  Vorname{getSortIndicator('vorname')}
+                </button>
+              </th>
+              <th>
+                <button className="table-sort-button" onClick={() => handleSort('nachname')}>
+                  Nachname{getSortIndicator('nachname')}
+                </button>
+              </th>
+              <th>
+                <button className="table-sort-button" onClick={() => handleSort('standort')}>
+                  Ort{getSortIndicator('standort')}
+                </button>
+              </th>
               <th>Qualifikationen</th>
               <th>Aktionen</th>
             </tr>
@@ -259,7 +402,7 @@ export function EmployeeOverview() {
             {totalEmployees === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center text-muted py-4">
-                  {hasActiveFilters ? 'Keine Mitarbeiter mit den aktuellen Filtern gefunden.' : 'Keine Mitarbeiter gefunden.'}
+                  {hasFilters ? 'Keine Mitarbeiter mit den aktuellen Filtern gefunden.' : 'Keine Mitarbeiter gefunden.'}
                 </td>
               </tr>
             ) : (
