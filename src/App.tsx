@@ -13,9 +13,11 @@ import { Login } from "./pages/Login.tsx";
 import { QualificationsOverview } from "./pages/QualificationsOverview.tsx";
 import { EMPLOYEE_ROUTES } from "./features/employees/routes";
 
+// Zentrale Route-Konfiguration der Anwendung.
 function App() {
     const auth = useAuth();
 
+    // Solange OIDC den Login-Status prueft, zeigen wir nur einen Loader.
     if (auth.isLoading) {
         return <Loader />;
     }
@@ -24,8 +26,10 @@ function App() {
         <Routes>
             <Route path="/callback" element={<Callback />} />
 
+            {/* Nicht eingeloggt: jeder Pfad fuehrt zur Login-Seite */}
             {!auth.isAuthenticated && <Route path="*" element={<Login />} />}
 
+            {/* Eingeloggt: alle geschuetzten Seiten inkl. Mitarbeiterverwaltung */}
             {auth.isAuthenticated && (
                 <>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />

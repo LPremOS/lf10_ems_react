@@ -5,6 +5,7 @@ import type { Employee } from "../types/Employee";
 import { EMPLOYEE_ROUTES } from "../features/employees/routes";
 import "./EmployeeDetailsView.css";
 
+// Reine Presentational-Komponente fuer die Mitarbeiterdetails.
 interface EmployeeDetailsViewProps {
     employee: Employee | null;
     loading?: boolean;
@@ -16,6 +17,7 @@ type EmployeeDetailItem = {
     value: string;
 };
 
+// Zeigt Lade-/Fehler-/Leerdatenzustand und bei Erfolg alle Mitarbeiterdaten an.
 export function EmployeeDetailsView({
     employee,
     loading = false,
@@ -23,6 +25,7 @@ export function EmployeeDetailsView({
 }: EmployeeDetailsViewProps) {
     const navigate = useNavigate();
 
+    // Ladezustand, solange noch kein Datensatz vorliegt.
     if (loading && !employee) {
         return (
             <div className="employee-details">
@@ -31,6 +34,7 @@ export function EmployeeDetailsView({
         );
     }
 
+    // Expliziter Fehlerzustand.
     if (error) {
         return (
             <div className="employee-details">
@@ -39,6 +43,7 @@ export function EmployeeDetailsView({
         );
     }
 
+    // Kein Fehler, aber auch kein Datensatz gefunden.
     if (!employee) {
         return (
             <div className="employee-details">
@@ -47,6 +52,7 @@ export function EmployeeDetailsView({
         );
     }
 
+    // Struktur fuer wiederverwendbares Rendering der Stammdaten.
     const detailItems: EmployeeDetailItem[] = [
         { label: "Vorname", value: employee.vorname },
         { label: "Nachname", value: employee.nachname },
@@ -63,12 +69,14 @@ export function EmployeeDetailsView({
                 <div className="details-actions">
                     <button
                         className="btn-edit"
+                        // Direkter Wechsel in die Bearbeitung.
                         onClick={() => navigate(EMPLOYEE_ROUTES.edit(employee.id))}
                     >
                         <AiOutlineEdit /> Bearbeiten
                     </button>
                     <button
                         className="btn-back"
+                        // Zurueck in die Mitarbeiterliste.
                         onClick={() => navigate(EMPLOYEE_ROUTES.overview)}
                     >
                         <FiArrowLeft /> Zurück zur Übersicht

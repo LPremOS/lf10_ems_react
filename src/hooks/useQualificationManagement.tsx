@@ -4,13 +4,16 @@ import type { QualificationType } from "../types/QualificationType";
 import { useEmployeeManagement } from "./useEmployeeManagement";
 import { useEmployeeApi } from "./useEmployeeApi";
 
+// Ergebnis fuer "Qualifikation sicherstellen" (existiert bereits oder wurde neu erstellt).
 export type EnsureQualificationResult =
     | { success: true; qualification: QualificationType; created: boolean }
     | { success: false; error: string };
 
+// Modal-Betriebsarten in der Qualifikationsverwaltung.
 type ModalMode = "add" | "edit" | "delete";
 type SaveVariant = "primary" | "danger";
 
+// Hook kapselt die komplette Qualifikations-UI-Logik inkl. Mitarbeiter-Beziehungen.
 export function useQualificationManagement() {
     const {
         fetchQualifications,
@@ -32,6 +35,7 @@ export function useQualificationManagement() {
     const [employeeCountWithQualification, setEmployeeCountWithQualification] = useState(0);
 
     const loadQualifications = useCallback(async (): Promise<QualificationType[]> => {
+        // Holt Liste aus API und schreibt sie in den lokalen State.
         const data = await fetchQualifications();
         if (!Array.isArray(data)) {
             return [];
@@ -42,6 +46,7 @@ export function useQualificationManagement() {
     }, [fetchQualifications]);
 
     useEffect(() => {
+        // Initiales Laden der Qualifikationen.
         loadQualifications();
     }, [loadQualifications]);
 
@@ -67,6 +72,7 @@ export function useQualificationManagement() {
         setSkillInput("");
         setSelectedQualification(qualification);
 
+        // Zaehlt, wie viele Mitarbeiter diese Qualifikation aktuell nutzen.
         const count = employees.filter(e =>
             e.qualifikationen.includes(qualification.skill)
         ).length;
@@ -82,6 +88,7 @@ export function useQualificationManagement() {
     };
 
     const saveQualification = async () => {
+        // Vereinheitlichter Speichern-Handler fuer add/edit/delete.
         const normalizedSkill = skillInput.trim();
 
         if (modalMode === "add") {
@@ -95,11 +102,13 @@ export function useQualificationManagement() {
                 return;
             }
         } else if (modalMode === "delete" && selectedQualification) {
+            // Vor dem Loeschen werden ggf. Verknuepfungen zu Mitarbeitern entfernt.
             if(employeeCountWithQualification > 0) {
                 const affectedEmployees = employees.filter(e =>
                 e.qualifikationen.includes(selectedQualification.skill)
                 );
 
+                // Entfernt die Qualifikation bei allen betroffenen Mitarbeitern.
                 for(const employee of affectedEmployees) {
                     await deleteQualificationFromEmployee(employee.id, selectedQualification.id);
                 }
@@ -116,6 +125,7 @@ export function useQualificationManagement() {
     };
 
     const ensureQualification = async (skillName: string): Promise<EnsureQualificationResult> => {
+        // Wird z.B. vom Mitarbeiterformular genutzt, wenn neue Skills ad-hoc entstehen.
         const normalizedSkill = skillName.trim();
         if (!normalizedSkill) {
             return { success: false, error: "Bitte geben Sie eine Qualifikation ein." };
@@ -127,6 +137,7 @@ export function useQualificationManagement() {
         );
 
         if (existingQualification) {
+            // Schon vorhanden -> direkt zurueckgeben, ohne API-Write.
             return {
                 success: true,
                 qualification: existingQualification,
@@ -139,6 +150,7 @@ export function useQualificationManagement() {
             return { success: false, error: createResult.error };
         }
 
+        // Nach dem Erstellen neu laden, damit wir den finalen Backend-Stand haben.
         const refreshedQualifications = await loadQualifications();
         const createdQualification = refreshedQualifications.find(
             (qualification) =>
@@ -150,6 +162,7 @@ export function useQualificationManagement() {
         }
 
         const fallbackQualification = createResult.data;
+        // Fallback, falls das Refetch nichts geliefert hat.
         setQualifications((previous) =>
             previous.some((qualification) => qualification.id === fallbackQualification.id)
                 ? previous

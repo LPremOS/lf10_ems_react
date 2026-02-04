@@ -6,6 +6,7 @@ import { useNotification } from "../components/common/NotificationProvider";
 import { EMPLOYEE_ROUTES } from "../features/employees/routes";
 import type { EmployeeFormData } from "../features/employees/formModel";
 
+// Seite "Mitarbeiter anlegen". Nutzt das gemeinsame EmployeeForm.
 export function EmployeeAdd() {
   const navigate = useNavigate();
   const { addEmployee } = useEmployeeApi();
@@ -14,6 +15,7 @@ export function EmployeeAdd() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const handleSubmit = async (data: EmployeeFormData) => {
+    // Doppelklick-Schutz waehrend laufender Anfrage.
     if (isSubmitting) {
       return;
     }
@@ -24,6 +26,7 @@ export function EmployeeAdd() {
     try {
       const result = await addEmployee(data);
       if (result.success) {
+        // Bei Erfolg zur Uebersicht zurueck und Erfolgsmeldung anzeigen.
         notify({
           tone: "success",
           title: "Mitarbeiter erfolgreich angelegt",
@@ -32,6 +35,7 @@ export function EmployeeAdd() {
         return;
       }
 
+      // API-Fehler werden lokal angezeigt und als Notification gespiegelt.
       setApiError(result.error);
       notify({
         tone: "error",

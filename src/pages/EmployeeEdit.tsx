@@ -7,6 +7,7 @@ import { useNotification } from "../components/common/NotificationProvider";
 import { EMPLOYEE_ROUTES } from "../features/employees/routes";
 import { toEmployeeFormData, type EmployeeFormData } from "../features/employees/formModel";
 
+// Seite "Mitarbeiter bearbeiten". Laedt vorhandene Daten und uebergibt sie ans Formular.
 export function EmployeeEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export function EmployeeEdit() {
   const [apiError, setApiError] = useState<string | null>(null);
 
   const handleSubmit = async (data: EmployeeFormData) => {
+    // Ohne ID oder bei laufender Anfrage darf nicht gespeichert werden.
     if (!id || isSubmitting) {
       return;
     }
@@ -30,6 +32,7 @@ export function EmployeeEdit() {
     try {
       const result = await updateEmployee(id, data);
       if (result.success) {
+        // Nach erfolgreichem Speichern zur Detailansicht springen.
         notify({
           tone: "success",
           title: "Änderungen gespeichert",
@@ -38,6 +41,7 @@ export function EmployeeEdit() {
         return;
       }
 
+      // Fehler im Formular anzeigen und als Notification ausgeben.
       setApiError(result.error);
       notify({
         tone: "error",
@@ -50,10 +54,12 @@ export function EmployeeEdit() {
   };
 
   if (loading && !employee) {
+    // Initialer Ladezustand solange der Datensatz noch nicht da ist.
     return <div>Lädt Mitarbeiterdaten...</div>;
   }
 
   if (!loading && !employee) {
+    // Nach abgeschlossenem Laden, aber ohne Datensatz -> Fehlermeldung.
     return <div className="text-danger">Fehler: {error ?? "Mitarbeiter nicht gefunden."}</div>;
   }
 

@@ -27,6 +27,7 @@ import {
 } from "../features/employees/overviewModel";
 import "./EmployeeOverview.css";
 
+// Layout-/Paging-Konstanten fuer die Uebersicht.
 const DEFAULT_ITEMS_PER_PAGE = 8;
 const MIN_ITEMS_PER_PAGE = 1;
 const DESKTOP_ROW_FALLBACK_HEIGHT = 52;
@@ -34,11 +35,13 @@ const MOBILE_ITEMS_PER_PAGE = 7;
 const MAX_VISIBLE_PAGE_BUTTONS = 5;
 const FILTER_DEBOUNCE_MS = 300;
 
+// Hauptseite der Mitarbeiterverwaltung (Liste, Filter, Sortierung, Paging, Loeschen).
 export function EmployeeOverview() {
     const navigate = useNavigate();
     const { notify } = useNotification();
     const { employees, loading, error, refreshEmployees } = useEmployeeManagement();
     const { deleteEmployee } = useEmployeeApi();
+    // Persistierten UI-Zustand (Filter/Sort/Page) einmalig aus localStorage laden.
     const persistedState = useMemo(loadPersistedOverviewState, []);
     const [employeeToDelete, setEmployeeToDelete] = useState<{ id: string; name: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
@@ -52,11 +55,13 @@ export function EmployeeOverview() {
     const [itemsPerPage, setItemsPerPage] = useState(DEFAULT_ITEMS_PER_PAGE);
     const [isMobileLayout, setIsMobileLayout] = useState(false);
 
+    // Debounced Filter fuer bessere Performance beim Tippen.
     const debouncedVorname = useDebounce(filters.vorname, FILTER_DEBOUNCE_MS);
     const debouncedNachname = useDebounce(filters.nachname, FILTER_DEBOUNCE_MS);
     const debouncedStandort = useDebounce(filters.standort, FILTER_DEBOUNCE_MS);
 
     const qualificationOptions = useMemo(() => {
+        // Alle vorhandenen Skills sammeln, trimmen und ohne Duplikate anzeigen.
         const allQualifications = employees.flatMap((employee) => employee.qualifikationen ?? []);
         return Array.from(
             new Set(allQualifications.map((qualification) => qualification.trim()).filter(Boolean)),
@@ -69,6 +74,7 @@ export function EmployeeOverview() {
     );
 
     const activeFilterChips = useMemo(
+        // Nur aktive Filter in kleine "Chips" fuer schnelle Entfernung umwandeln.
         () =>
             (Object.keys(filters) as FilterKey[])
                 .filter((key) => filters[key].trim() !== "")
@@ -81,12 +87,14 @@ export function EmployeeOverview() {
     );
 
     const filteredEmployees = useMemo(() => {
+        // Einheitliches Suchformat.
         const normalizedVorname = normalizeFilterValue(debouncedVorname);
         const normalizedNachname = normalizeFilterValue(debouncedNachname);
         const normalizedStandort = normalizeFilterValue(debouncedStandort);
         const normalizedQualifikation = normalizeFilterValue(filters.qualifikation);
 
         return employees.filter((employee) => {
+            // Alle gesetzten Filter muessen gleichzeitig passen.
             const matchesVorname =
                 normalizedVorname === "" ||
                 employee.vorname.toLowerCase().includes(normalizedVorname);
@@ -117,6 +125,7 @@ export function EmployeeOverview() {
             return filteredEmployees;
         }
 
+        // Richtung wird ueber Multiplikator gesteuert.
         const multiplier = sortDirection === "asc" ? 1 : -1;
         return [...filteredEmployees].sort(
             (left, right) =>
@@ -127,6 +136,7 @@ export function EmployeeOverview() {
     const totalEmployees = sortedEmployees.length;
 
     const recalculateItemsPerPage = useCallback(() => {
+        // Mobile nutzt feste Kartenzahl.
         if (isMobileLayout) {
             setItemsPerPage((previous) =>
                 previous === MOBILE_ITEMS_PER_PAGE ? previous : MOBILE_ITEMS_PER_PAGE,
@@ -155,6 +165,7 @@ export function EmployeeOverview() {
             Math.floor(availableHeight / Math.max(firstRowHeight, 1)),
         );
 
+        // State nur aktualisieren, wenn sich der Wert wirklich geaendert hat.
         setItemsPerPage((previous) =>
             previous === nextItemsPerPage ? previous : nextItemsPerPage,
         );
@@ -165,6 +176,7 @@ export function EmployeeOverview() {
             return;
         }
 
+        // Verhindert doppeltes Scrollen innerhalb des App-Layouts.
         const contentElement = document.querySelector<HTMLElement>(".app-layout__content");
         if (!contentElement) {
             return;
@@ -179,6 +191,7 @@ export function EmployeeOverview() {
             return;
         }
 
+        // Schaltet zwischen Tabellen- und Mobile-Kartenlayout.
         const mediaQuery = window.matchMedia("(max-width: 768px)");
         const handleMediaQueryChange = (event: MediaQueryListEvent) => {
             setIsMobileLayout(event.matches);
@@ -190,6 +203,7 @@ export function EmployeeOverview() {
     }, []);
 
     useEffect(() => {
+        // Recalculate bei allen relevanten UI-Aenderungen.
         recalculateItemsPerPage();
     }, [
         recalculateItemsPerPage,
@@ -206,6 +220,7 @@ export function EmployeeOverview() {
             return;
         }
 
+        // Recalculate auch bei klassischem Browser-Resize.
         const handleResize = () => recalculateItemsPerPage();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
@@ -217,6 +232,7 @@ export function EmployeeOverview() {
     const maxVisiblePageButtons = isMobileLayout ? 3 : MAX_VISIBLE_PAGE_BUTTONS;
     const totalPages = Math.max(1, Math.ceil(totalEmployees / itemsPerPage));
     const paginatedEmployees = useMemo(() => {
+        // Schneidet die bereits gefilterte + sortierte Liste auf die aktuelle Seite.
         const start = (currentPage - 1) * itemsPerPage;
         return sortedEmployees.slice(start, start + itemsPerPage);
     }, [currentPage, itemsPerPage, sortedEmployees]);
@@ -226,6 +242,7 @@ export function EmployeeOverview() {
     );
 
     useEffect(() => {
+        // Bei Filterwechsel wieder auf Seite 1 springen.
         if (!hasInitializedFilterEffects.current) {
             hasInitializedFilterEffects.current = true;
             return;
@@ -234,6 +251,7 @@ export function EmployeeOverview() {
     }, [debouncedNachname, debouncedStandort, debouncedVorname, filters.qualifikation]);
 
     useEffect(() => {
+        // Falls Seitenanzahl kleiner wird, aktuelle Seite korrigieren.
         if (currentPage > totalPages) {
             setCurrentPage(totalPages);
         }
@@ -244,6 +262,7 @@ export function EmployeeOverview() {
             return;
         }
 
+        // UI-Zustand persistent speichern.
         const persistedValue: PersistedOverviewState = {
             filters,
             sortKey,
@@ -258,16 +277,19 @@ export function EmployeeOverview() {
     };
 
     const clearSingleFilter = (key: FilterKey) => {
+        // Entfernt genau einen Filter-Chip.
         setFilter(key, "");
         setCurrentPage(1);
     };
 
     const resetFilters = () => {
+        // Setzt alle Filter auf den Ausgangszustand.
         setFilters({ ...DEFAULT_FILTERS });
         setCurrentPage(1);
     };
 
     const handleSort = (key: SortKey) => {
+        // Gleiches Feld => Richtung toggeln, neues Feld => auf "asc" starten.
         if (sortKey === key) {
             setSortDirection((previous) => (previous === "asc" ? "desc" : "asc"));
             return;
@@ -278,6 +300,7 @@ export function EmployeeOverview() {
     };
 
     const getSortIndicator = (key: SortKey): string => {
+        // Anzeige von Pfeilen in den Tabellen-Headern.
         if (sortKey !== key) {
             return "";
         }
@@ -285,6 +308,7 @@ export function EmployeeOverview() {
     };
 
     const handleMobileSortChange = (value: string) => {
+        // Sortierung aus mobilem Select.
         if (!value) {
             setSortKey(null);
             return;
@@ -299,12 +323,14 @@ export function EmployeeOverview() {
     };
 
     const closeDeleteModal = () => {
+        // Schliessen nur, wenn kein Delete-Request laeuft.
         if (!isDeleting) {
             setEmployeeToDelete(null);
         }
     };
 
     const openDeleteModal = (id: string, vorname: string, nachname: string) => {
+        // Merkt den Datensatz, der im Modal bestaetigt werden soll.
         setEmployeeToDelete({
             id,
             name: `${vorname} ${nachname}`,
@@ -316,6 +342,7 @@ export function EmployeeOverview() {
             return;
         }
 
+        // Fuehrt den Loeschvorgang aus und aktualisiert danach die Liste.
         setIsDeleting(true);
         try {
             const result = await deleteEmployee(employeeToDelete.id);
@@ -340,6 +367,7 @@ export function EmployeeOverview() {
     };
 
     const renderQualificationBadges = (qualifications: string[]) => {
+        // Vereinheitlicht die Darstellung von Skills in Tabelle und Kartenlayout.
         if (qualifications.length === 0) {
             return <span className="text-muted">Keine Qualifikationen</span>;
         }
@@ -352,6 +380,7 @@ export function EmployeeOverview() {
     };
 
     const renderActionButtons = (employee: Employee, isMobile = false) => (
+        // Wiederverwendete Aktionsbuttons fuer Desktop- und Mobile-Ansicht.
         <div className={`action-buttons${isMobile ? " action-buttons-mobile" : ""}`}>
             <button
                 className="action-btn"
@@ -378,10 +407,12 @@ export function EmployeeOverview() {
     );
 
     if (loading) {
+        // Globaler Ladezustand der Mitarbeiterliste.
         return <Loader />;
     }
 
     if (error) {
+        // Klarer Fehlerzustand mit Hinweistext fuer Backend/Auth.
         return (
             <div className="employee-overview employee-overview--paginated">
                 <div className="alert alert-danger" role="alert">

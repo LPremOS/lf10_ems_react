@@ -18,6 +18,7 @@ import "./EmployeeForm.css";
 export type { EmployeeFormData } from "../features/employees/formModel";
 type EmployeeFieldName = EmployeeFormFieldName;
 
+// Props fuer die gemeinsame Formular-Komponente (create + edit).
 interface EmployeeFormProps {
     initialData?: EmployeeFormData | null;
     onSubmit: (data: EmployeeFormData) => void;
@@ -27,14 +28,18 @@ interface EmployeeFormProps {
     submitLabel?: string;
 }
 
+// Spezieller Select-Wert fuer "neue Qualifikation anlegen".
 const CREATE_QUALIFICATION_OPTION = "__create_new__";
+// Untergrenze der UI-Skalierung, damit der Inhalt lesbar bleibt.
 const MIN_FORM_SCALE = 0.78;
 
 function normalizeQualificationName(value: string): string {
+    // Konsistente Normalisierung fuer Duplikatpruefungen.
     return value.trim();
 }
 
 function getQualificationOptionLabel(skill: string): string {
+    // Lange Skillnamen werden in der Select-UI abgekuerzt.
     const trimmedSkill = skill.trim();
     if (trimmedSkill.length <= 40) {
         return trimmedSkill;
@@ -42,6 +47,7 @@ function getQualificationOptionLabel(skill: string): string {
     return `${trimmedSkill.slice(0, 37)}...`;
 }
 
+// Gemeinsames Formular fuer "Mitarbeiter anlegen" und "Mitarbeiter bearbeiten".
 export function EmployeeForm({
     initialData,
     onSubmit,
@@ -59,6 +65,7 @@ export function EmployeeForm({
     } = useQualificationManagement();
     const { notify } = useNotification();
 
+    // Ausgangsdaten fuer das Formular (bei Edit aus initialData, sonst leer).
     const initialFormData = useMemo(() => createEmployeeFormData(initialData), [initialData]);
     const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
     const [selectedQualification, setSelectedQualification] = useState<string>("");
@@ -73,6 +80,7 @@ export function EmployeeForm({
     const [formScale, setFormScale] = useState(1);
 
     useEffect(() => {
+        // Bei Wechsel der Initialdaten wird das Formular komplett resetet.
         setFormData(initialFormData);
         setTouched({});
         setSubmitAttempted(false);
@@ -83,6 +91,7 @@ export function EmployeeForm({
     }, [initialFormData]);
 
     const recalculateFormScale = useCallback(() => {
+        // Dynamische Skalierung, damit das Formular vertikal in den Viewport passt.
         const pageElement = pageRef.current;
         const formContentElement = formContentRef.current;
 
@@ -102,6 +111,7 @@ export function EmployeeForm({
     }, []);
 
     useEffect(() => {
+        // Re-Scale bei inhaltlichen Aenderungen (z.B. Fehlerbox, neue Qualifikationen).
         recalculateFormScale();
     }, [
         recalculateFormScale,
@@ -117,6 +127,7 @@ export function EmployeeForm({
             return;
         }
 
+        // Re-Scale beim Fenster-Resize.
         const handleResize = () => recalculateFormScale();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
@@ -127,6 +138,7 @@ export function EmployeeForm({
             return;
         }
 
+        // Beobachtet Groessenaenderungen ohne manuelle Trigger.
         const observer = new ResizeObserver(() => recalculateFormScale());
         if (pageRef.current) {
             observer.observe(pageRef.current);
@@ -139,17 +151,19 @@ export function EmployeeForm({
     }, [recalculateFormScale]);
 
     const availableQualifications = useMemo(
+        // Nur Skillnamen fuer das Select benoetigt.
         () => qualifications.map((qualification) => qualification.skill),
         [qualifications],
     );
 
     const selectableQualifications = useMemo(() => {
+        // Bereits zugewiesene Skills sollen im Dropdown nicht nochmal angeboten werden.
         const selected = new Set(formData.qualifikationen);
         return availableQualifications.filter((qualification) => !selected.has(qualification));
     }, [formData.qualifikationen, availableQualifications]);
 
+    // Feldvalidierung und Dirty-Check als berechnete Werte.
     const formErrors = useMemo(() => validateEmployeeForm(formData), [formData]);
-
     const isDirty = useMemo(() => !areEmployeeFormDataEqual(formData, initialFormData), [formData, initialFormData]);
 
     const hasValidationErrors = Object.keys(formErrors).length > 0;
@@ -162,10 +176,12 @@ export function EmployeeForm({
         (!isCreateQualificationSelected || newQualificationName.trim() !== "");
 
     const showFieldError = (field: EmployeeFieldName): boolean => {
+        // Fehler erst nach Touch oder Submit anzeigen -> ruhigeres UX-Verhalten.
         return Boolean(formErrors[field]) && (Boolean(touched[field]) || submitAttempted);
     };
 
     const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+        // Allgemeiner Input-Handler fuer alle Textfelder.
         const { name, value } = event.target;
         const fieldName = name as EmployeeFieldName;
         setFormData((previous) => ({
@@ -175,6 +191,7 @@ export function EmployeeForm({
     };
 
     const markFieldTouched = (field: EmployeeFieldName) => {
+        // Markiert ein Feld als "interagiert" fuer die Fehleranzeige.
         setTouched((previous) => ({
             ...previous,
             [field]: true,
@@ -182,6 +199,7 @@ export function EmployeeForm({
     };
 
     const removeQualification = (qualification: string) => {
+        // Entfernt ein Skill-Badge aus der aktuellen Zuordnung.
         setFormData((previous) => ({
             ...previous,
             qualifikationen: previous.qualifikationen.filter((entry) => entry !== qualification),
@@ -189,9 +207,11 @@ export function EmployeeForm({
     };
 
     const addQualification = async () => {
+        // Nichts starten, wenn bereits gespeichert/erstellt wird.
         if (isBusy) return;
 
         if (selectedQualification && selectedQualification !== CREATE_QUALIFICATION_OPTION) {
+            // Vorhandene Qualifikation direkt zuweisen (mit Duplikat-Schutz).
             setFormData((previous) => ({
                 ...previous,
                 qualifikationen: previous.qualifikationen.some(
@@ -217,6 +237,7 @@ export function EmployeeForm({
             return;
         }
 
+        // Neue Qualifikation ggf. im Backend erzeugen und danach zuweisen.
         setIsCreatingQualification(true);
         setNewQualificationError(null);
         try {
@@ -256,6 +277,7 @@ export function EmployeeForm({
     };
 
     const handleSubmit = (event: FormEvent) => {
+        // Frontend-Validierung vor dem eigentlichen Submit.
         event.preventDefault();
         setSubmitAttempted(true);
         if (hasValidationErrors) return;
@@ -263,6 +285,7 @@ export function EmployeeForm({
     };
 
     const handleCancelClick = () => {
+        // Bei geaenderten Daten wird ein Bestaetigungsdialog angezeigt.
         if (isBusy) return;
         if (!isDirty) {
             navigate(EMPLOYEE_ROUTES.overview);
@@ -272,6 +295,7 @@ export function EmployeeForm({
     };
 
     const confirmCancel = () => {
+        // Verwirft Aenderungen und geht zur Uebersicht zurueck.
         setShowCancelConfirm(false);
         navigate(EMPLOYEE_ROUTES.overview);
     };

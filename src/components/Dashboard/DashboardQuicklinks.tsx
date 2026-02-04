@@ -3,10 +3,12 @@ import { FiArrowRight, FiUsers, FiAward } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { EMPLOYEE_ROUTES } from "../../features/employees/routes";
 
+// Klickbare Kacheln fuer den Schnellzugriff im Dashboard.
 export const DashboardQuicklinks: React.FC = () => {
   const navigate = useNavigate();
   return (
     <div className="dashboard-quicklinks-row">
+      {/* Einstieg in die Mitarbeiterverwaltung */}
       <div
         className="dashboard-quicklink-card"
         tabIndex={0}
@@ -22,6 +24,7 @@ export const DashboardQuicklinks: React.FC = () => {
         </div>
         <span className="dashboard-quicklink-arrow"><FiArrowRight /></span>
       </div>
+      {/* Einstieg in die Qualifikationsverwaltung */}
       <div
         className="dashboard-quicklink-card"
         tabIndex={0}

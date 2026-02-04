@@ -1,13 +1,18 @@
 import type { Employee } from "../../types/Employee";
 
+// API-Endpunkte fuer Mitarbeiter und Qualifikationen.
+// Werden zentral gehalten, damit sie nicht ueber mehrere Hooks verteilt sind.
 export const EMPLOYEES_URL = "http://localhost:8089/employees";
 export const QUALIFICATIONS_URL = "http://localhost:8089/qualifications";
 
+// Ein einzelner Qualifikations-Eintrag so wie er vom Backend kommt.
 export interface QualificationApiItem {
     id: number;
     skill: string;
 }
 
+// Payload-Form fuer POST/PUT gegen das Backend.
+// Das Backend nutzt englische Feldnamen.
 export interface EmployeeApiPayload {
     firstName?: string;
     lastName?: string;
@@ -18,6 +23,7 @@ export interface EmployeeApiPayload {
     skillSet?: number[];
 }
 
+// Response-Form fuer Mitarbeiter aus dem Backend.
 export interface EmployeeApiResponse {
     id: number;
     firstName: string;
@@ -33,6 +39,8 @@ export function toEmployeeApiPayload(
     employee: Partial<Employee>,
     qualificationBySkill: Map<string, number>,
 ): EmployeeApiPayload {
+    // Nur gesetzte Felder werden uebernommen.
+    // So koennen wir die Funktion fuer "create" und "update" nutzen.
     const payload: EmployeeApiPayload = {};
 
     if (employee.vorname !== undefined) payload.firstName = employee.vorname;
@@ -43,8 +51,10 @@ export function toEmployeeApiPayload(
     if (employee.postcode !== undefined) payload.postcode = employee.postcode;
 
     if (employee.qualifikationen !== undefined) {
+        // Die UI arbeitet mit Skill-Namen, das Backend erwartet Skill-IDs.
         payload.skillSet = employee.qualifikationen
             .map((skill) => qualificationBySkill.get(skill))
+            // Unbekannte Skills werden rausgefiltert.
             .filter((id): id is number => typeof id === "number");
     }
 
@@ -52,6 +62,8 @@ export function toEmployeeApiPayload(
 }
 
 export function fromEmployeeApiResponse(apiEmployee: EmployeeApiResponse): Employee {
+    // Rueckwaerts-Mapping in das Frontend-Modell.
+    // Nullish-Coalescing sorgt fuer stabile Fallbacks.
     return {
         id: String(apiEmployee.id),
         vorname: apiEmployee.firstName ?? "",
