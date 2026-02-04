@@ -19,11 +19,13 @@ export function QualificationsOverview() {
         showModal,
         modalMode,
         selectedQualification,
+        employeeCountWithQualification,
         skillInput,
         setSkillInput,
         openAddModal,
         openEditModal,
         openDeleteModal,
+        saveVariant,
         closeModal,
         saveQualification,
         getModalTitle,
@@ -36,6 +38,14 @@ export function QualificationsOverview() {
 
     const renderModalContent = () => {
         if (modalMode === 'delete' && selectedQualification) {
+            if(employeeCountWithQualification > 0) {
+                return(
+                    <p>
+                        <strong>{selectedQualification?.skill}</strong> ist derzeit <strong>{employeeCountWithQualification}</strong> Mitarbeitern zugewiesen.<br/>
+                        Möchten Sie die Qualifikation wirklich löschen?
+                    </p>
+                )
+            }
             return (
                 <p>
                     Möchten Sie die Qualifikation <strong>{selectedQualification?.skill}</strong> wirklich löschen?
@@ -140,6 +150,7 @@ export function QualificationsOverview() {
                 onClose={closeModal}
                 onSave={saveQualification}
                 title={getModalTitle()}
+                saveVariant={saveVariant}
                 saveButtonText={getModalSaveText()}
                 children={renderModalContent()}           
             />

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useQualificationApi } from "./useQualificationApi";
 import type { QualificationType } from "../types/QualificationType";
+import { useEmployeeManagement } from "./useEmployeeManagement";
+import { useEmployeeApi } from "./useEmployeeApi";
 
 export type EnsureQualificationResult =
     | { success: true; qualification: QualificationType; created: boolean }
@@ -17,12 +19,16 @@ export function useQualificationManagement() {
         loading,
         error,
     } = useQualificationApi();
+    const { employees } = useEmployeeManagement();
+    const { deleteQualificationFromEmployee } = useEmployeeApi();
 
     const [qualifications, setQualifications] = useState<QualificationType[]>([]);
+    const [saveVariant, setSaveVariant] = useState('primary');
     const [showModal, setShowModal] = useState(false);
     const [skillInput, setSkillInput] = useState("");
     const [modalMode, setModalMode] = useState<ModalMode>("add");
     const [selectedQualification, setSelectedQualification] = useState<QualificationType | null>(null);
+    const [employeeCountWithQualification, setEmployeeCountWithQualification] = useState(0);
 
     const loadQualifications = useCallback(async (): Promise<QualificationType[]> => {
         const data = await fetchQualifications();
@@ -40,6 +46,7 @@ export function useQualificationManagement() {
 
     const openAddModal = () => {
         setModalMode("add");
+        setSaveVariant('primary');
         setSkillInput("");
         setSelectedQualification(null);
         setShowModal(true);
@@ -47,6 +54,7 @@ export function useQualificationManagement() {
 
     const openEditModal = (qualification: QualificationType) => {
         setModalMode("edit");
+        setSaveVariant('primary');
         setSkillInput(qualification.skill);
         setSelectedQualification(qualification);
         setShowModal(true);
@@ -54,8 +62,15 @@ export function useQualificationManagement() {
 
     const openDeleteModal = (qualification: QualificationType) => {
         setModalMode("delete");
+        setSaveVariant('danger');
         setSkillInput("");
         setSelectedQualification(qualification);
+
+        const count = employees.filter(e =>
+            e.qualifikationen.includes(qualification.skill)
+        ).length;
+        setEmployeeCountWithQualification(count);
+
         setShowModal(true);
     };
 
@@ -79,6 +94,16 @@ export function useQualificationManagement() {
                 return;
             }
         } else if (modalMode === "delete" && selectedQualification) {
+            if(employeeCountWithQualification > 0) {
+                const affectedEmployees = employees.filter(e =>
+                e.qualifikationen.includes(selectedQualification.skill)
+                );
+
+                for(const employee of affectedEmployees) {
+                    await deleteQualificationFromEmployee(employee.id, selectedQualification.id);
+                }
+            }
+
             const result = await deleteQualification(selectedQualification.id);
             if (!result.success) {
                 return;
@@ -151,10 +176,12 @@ export function useQualificationManagement() {
         modalMode,
         selectedQualification,
         skillInput,
+        employeeCountWithQualification,
         setSkillInput,
         openAddModal,
         openEditModal,
         openDeleteModal,
+        saveVariant,
         closeModal,
         saveQualification,
         ensureQualification,
