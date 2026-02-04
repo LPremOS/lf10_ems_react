@@ -9,6 +9,7 @@ export type EnsureQualificationResult =
     | { success: false; error: string };
 
 type ModalMode = "add" | "edit" | "delete";
+type SaveVariant = "primary" | "danger";
 
 export function useQualificationManagement() {
     const {
@@ -23,7 +24,7 @@ export function useQualificationManagement() {
     const { deleteQualificationFromEmployee } = useEmployeeApi();
 
     const [qualifications, setQualifications] = useState<QualificationType[]>([]);
-    const [saveVariant, setSaveVariant] = useState('primary');
+    const [saveVariant, setSaveVariant] = useState<SaveVariant>("primary");
     const [showModal, setShowModal] = useState(false);
     const [skillInput, setSkillInput] = useState("");
     const [modalMode, setModalMode] = useState<ModalMode>("add");

@@ -30,6 +30,14 @@ function normalizeQualificationName(value: string): string {
     return value.trim();
 }
 
+function getQualificationOptionLabel(skill: string): string {
+    const trimmedSkill = skill.trim();
+    if (trimmedSkill.length <= 40) {
+        return trimmedSkill;
+    }
+    return `${trimmedSkill.slice(0, 37)}...`;
+}
+
 function createInitialFormData(initialData?: EmployeeFormData | null): EmployeeFormData {
     return {
         vorname: initialData?.vorname ?? "",
@@ -486,12 +494,16 @@ export function EmployeeForm({
                                                         {qualificationsLoading
                                                             ? "Lade Qualifikationen..."
                                                             : selectableQualifications.length === 0
-                                                                ? "Keine Qualifikationen verfügbar - oder neue erstellen"
+                                                                ? "Keine Qualifikationen verfügbar"
                                                                 : "Wählen Sie eine Qualifikation aus"}
                                                     </option>
                                                     {selectableQualifications.map((qualification) => (
-                                                        <option key={qualification} value={qualification}>
-                                                            {qualification}
+                                                        <option
+                                                            key={qualification}
+                                                            value={qualification}
+                                                            title={qualification}
+                                                        >
+                                                            {getQualificationOptionLabel(qualification)}
                                                         </option>
                                                     ))}
                                                     <option value={CREATE_QUALIFICATION_OPTION}>+ Neue Qualifikation erstellen</option>

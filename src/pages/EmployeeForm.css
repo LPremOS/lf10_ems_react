@@ -114,6 +114,9 @@
 
 .field input,
 .select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 38px;
   padding: 8px 10px;
   border: 1px solid #d9dde6;
@@ -123,6 +126,16 @@
   background: #ffffff;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.select {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.select option {
+  max-width: 100%;
 }
 
 .field input:focus,
@@ -232,6 +245,9 @@
 }
 
 .add-inline-field input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   height: 38px;
   padding: 8px 10px;
   border: 1px solid #d9dde6;

@@ -86,12 +86,21 @@
 
 .filter-group input,
 .filter-group select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 8px 10px;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
   font-size: 14px;
   background-color: white;
   transition: border-color 0.2s;
+}
+
+.filter-group select {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .filter-group input:focus,
@@ -501,11 +510,17 @@
   }
 
   .mobile-sort-controls select {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     padding: 8px 10px;
     border: 1px solid #d0d0d0;
     border-radius: 6px;
     font-size: 13px;
     background-color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .mobile-sort-controls select:focus {
