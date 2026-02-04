@@ -378,7 +378,7 @@ export function EmployeeForm({
                                             {showFieldError("standort") && <p className="field-error">{formErrors.standort}</p>}
                                         </div>
 
-                                        <div className="field span-8">
+                                        <div className="field span-6">
                                             <label htmlFor="street">Straße</label>
                                             <input
                                                 type="text"
@@ -394,7 +394,7 @@ export function EmployeeForm({
                                             {showFieldError("street") && <p className="field-error">{formErrors.street}</p>}
                                         </div>
 
-                                        <div className="field span-4">
+                                        <div className="field span-3">
                                             <label htmlFor="postcode">PLZ</label>
                                             <input
                                                 type="text"
@@ -412,7 +412,7 @@ export function EmployeeForm({
                                             {showFieldError("postcode") && <p className="field-error">{formErrors.postcode}</p>}
                                         </div>
 
-                                        <div className="field span-4">
+                                        <div className="field span-3">
                                             <label htmlFor="telefonnummer">Telefonnummer</label>
                                             <input
                                                 type="tel"
