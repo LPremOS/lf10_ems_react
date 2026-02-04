@@ -64,7 +64,7 @@
   margin: 2.5rem 0 1.2rem 0;
 }
 
-/* Card Rows - flexible Grid Layout */
+/* Card Rows: flexibles Grid Layout */
 .dashboard-cards-row,
 .dashboard-quicklinks-row {
   display: grid;
