@@ -363,14 +363,14 @@
 }
 
 .pagination-active {
-  background-color: #007bff;
+  background-color: #2eb82e;
   color: white;
-  border-color: #007bff;
+  border-color: #28a428;
 }
 
 .pagination-active:hover {
-  background-color: #0056b3;
-  border-color: #0056b3;
+  background-color: #229622;
+  border-color: #28a428;
 }
 
 @media (max-width: 1024px) {

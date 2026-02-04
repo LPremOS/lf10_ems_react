@@ -639,7 +639,28 @@ export function EmployeeOverview() {
                     Next <FiChevronRight />
                 </button>
             </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
+      <div className="pagination">
+        <button className="pagination-btn">
+          <FiChevronLeft /> Zurück
+        </button>
+        <button className="pagination-number pagination-active">1</button>
+        <button className="pagination-number">2</button>
+        <button className="pagination-number">3</button>
+        <button className="pagination-btn">
+          Weiter <FiChevronRight />
+        </button>
+      </div>
+    </div>
+  );
+}
             <CustomModal
                 show={Boolean(employeeToDelete)}
                 onClose={closeDeleteModal}
