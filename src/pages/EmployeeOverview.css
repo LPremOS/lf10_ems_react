@@ -3,11 +3,28 @@
   background-color: #fff;
 }
 
+.employee-overview--paginated {
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.employee-results {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .employee-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 
 .employee-header h1 {
@@ -37,22 +54,22 @@
   background-color: #f8f9fa;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 30px;
+  padding: 16px;
+  margin-bottom: 16px;
 }
 
 .filter-section h3 {
   font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 20px 0;
+  margin: 0 0 12px 0;
 }
 
 .filter-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .filter-group {
@@ -63,13 +80,13 @@
 .filter-group label {
   font-size: 14px;
   color: #333;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: 500;
 }
 
 .filter-group input,
 .filter-group select {
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 1px solid #d0d0d0;
   border-radius: 6px;
   font-size: 14px;
@@ -80,7 +97,8 @@
 .filter-group input:focus,
 .filter-group select:focus {
   outline: none;
-  border-color: #80bdff;
+  border-color: #2eb82e;
+  box-shadow: 0 0 0 3px rgba(46, 184, 46, 0.2);
 }
 
 .filter-group input::placeholder {
@@ -98,7 +116,7 @@
   background-color: #f0f0f0;
   color: #333;
   border: 1px solid #d0d0d0;
-  padding: 10px 24px;
+  padding: 8px 18px;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
@@ -127,16 +145,15 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .filter-chip {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #e9f0ff;
-  border: 1px solid #c7d9ff;
-  color: #1f3b7a;
+  background-color: rgba(148, 194, 133, 0.48);
+  color: #26591d;
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 13px;
@@ -160,11 +177,12 @@
 }
 
 .table-container {
-  border: 1px solid #e0e0e0;
   border-radius: 8px;
+  flex: 1;
+  min-height: 0;
   overflow-x: auto;
+  overflow-y: hidden;
   -webkit-overflow-scrolling: touch;
-  margin-bottom: 24px;
 }
 
 .employee-table {
@@ -172,6 +190,7 @@
   min-width: 860px;
   border-collapse: collapse;
   background-color: white;
+  border: 1px solid #e0e0e0;
 }
 
 .employee-table thead {
@@ -180,7 +199,7 @@
 }
 
 .employee-table th {
-  padding: 16px;
+  padding: 12px;
   text-align: left;
   font-size: 14px;
   font-weight: 600;
@@ -216,24 +235,28 @@
 }
 
 .employee-table td {
-  padding: 16px;
+  padding: 10px 12px;
   font-size: 14px;
   color: #333;
 }
 
 .qualifications {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow: hidden;
+  min-height: 24px;
+  align-items: center;
 }
 
 .qualification-badge {
   background-color: #d4edda;
   color: #155724;
-  padding: 4px 12px;
+  padding: 2px 8px;
   border-radius: 20px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .action-buttons {
@@ -244,10 +267,10 @@
 .action-btn {
   background-color: transparent;
   border: none;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
   color: #666;
-  font-size: 18px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,6 +294,7 @@
 
 .mobile-employee-list {
   display: none;
+  min-height: 0;
 }
 
 .mobile-sort-controls {
@@ -319,14 +343,17 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
+  margin-top: auto;
+  padding-top: 8px;
+  flex-shrink: 0;
 }
 
 .pagination-btn {
   background-color: white;
   border: 1px solid #d0d0d0;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -350,12 +377,12 @@
 .pagination-number {
   background-color: white;
   border: 1px solid #d0d0d0;
-  padding: 8px 14px;
+  padding: 6px 10px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 40px;
+  min-width: 34px;
 }
 
 .pagination-number:hover {
@@ -408,13 +435,25 @@
   }
 
   .filter-section {
-    padding: 16px;
-    margin-bottom: 20px;
+    padding: 12px;
+    margin-bottom: 12px;
   }
 
   .filter-row {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .filter-group label {
+    margin-bottom: 4px;
+    font-size: 13px;
+  }
+
+  .filter-group input,
+  .filter-group select {
+    padding: 7px 9px;
+    font-size: 13px;
   }
 
   .filter-actions {
@@ -437,8 +476,9 @@
   .mobile-employee-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 20px;
+    flex: 1;
+    gap: 6px;
+    overflow: hidden;
   }
 
   .mobile-sort-controls {
@@ -447,9 +487,9 @@
 
   .mobile-sort-controls label {
     display: block;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
-    margin-bottom: 6px;
+    margin-bottom: 4px;
     color: #333;
   }
 
@@ -461,21 +501,64 @@
   }
 
   .mobile-sort-controls select {
-    padding: 10px 12px;
+    padding: 8px 10px;
     border: 1px solid #d0d0d0;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 13px;
     background-color: white;
+  }
+
+  .mobile-sort-controls select:focus {
+    outline: none;
+    border-color: #2eb82e;
+    box-shadow: 0 0 0 3px rgba(46, 184, 46, 0.2);
   }
 
   .mobile-sort-direction-btn {
     background-color: white;
     border: 1px solid #d0d0d0;
     border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 13px;
+    padding: 8px 10px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
+  }
+
+  .employee-card {
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .employee-card-header {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .employee-card-header h4 {
+    font-size: 14px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .employee-card-location {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .employee-card-qualifications {
+    gap: 4px;
+    margin-bottom: 6px;
+    flex-wrap: nowrap;
+    overflow: hidden;
+    min-height: 20px;
+  }
+
+  .employee-card-qualifications .qualification-badge {
+    padding: 1px 6px;
+    font-size: 11px;
+    line-height: 1.2;
   }
 
   .mobile-sort-direction-btn:disabled {
@@ -485,11 +568,29 @@
 
   .action-buttons-mobile {
     justify-content: flex-end;
+    gap: 4px;
+  }
+
+  .action-buttons-mobile .action-btn {
+    padding: 4px;
+    font-size: 14px;
   }
 
   .pagination {
     justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pagination::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pagination-btn,
+  .pagination-number {
+    flex-shrink: 0;
   }
 }
 

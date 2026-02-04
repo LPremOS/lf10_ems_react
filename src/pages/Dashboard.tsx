@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiAward, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualificationApi } from "../hooks/useQualificationApi";
 import type { Employee as EmployeeType } from "../types/Employee";
 import type { QualificationType } from "../types/QualificationType";
 import "./Dashboard.css";
+import { DashboardCards } from "../components/dashboard/DashboardCards";
+import { DashboardQuicklinks } from "../components/dashboard/DashboardQuicklinks";
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -37,61 +38,19 @@ const Dashboard = () => {
     }, [fetchQualifications]);
 
     return (
-        <div className="dashboard-content-wrapper">
-            <h1 className="dashboard-title">Dashboard</h1>
-            <div className="dashboard-cards-row">
-                <div className="dashboard-card">
-                    <div className="dashboard-card-value">{loadingEmployees ? "..." : employees.length}</div>
-                    <div className="dashboard-card-label">Mitarbeiter insgesamt</div>
-                    <span className="dashboard-employees-icon">
-                        <FiUsers />
-                    </span>
-                </div>
-                <div className="dashboard-card">
-                    <div className="dashboard-card-value">{loadingQualifications ? "..." : qualifications.length}</div>
-                    <div className="dashboard-card-label">Qualifikationen insgesamt</div>
-                    <span className="dashboard-qualifications-icon">
-                        <FiAward />
-                    </span>
-                </div>
-            </div>
+        <div>
+            <div className="dashboard-content-wrapper">
+                <h1 className="dashboard-title">Dashboard</h1>
+                <DashboardCards 
+                  employeesCount={employees.length}
+                  qualificationsCount={qualifications.length}
+                  loadingEmployees={loadingEmployees}
+                  loadingQualifications={loadingQualifications}
+                />
 
-            <h2 className="dashboard-subtitle">Schnellzugriff</h2>
-            <div className="dashboard-quicklinks-row">
-                <div
-                    className="dashboard-quicklink-card"
-                    tabIndex={0}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => navigate("/employees")}
-                >
-                    <span className="dashboard-quicklink-icon">
-                        <FiUsers />
-                    </span>
-                    <div className="dashboard-quicklink-content">
-                        <div className="dashboard-quicklink-title">Mitarbeiterverwaltung</div>
-                        <div className="dashboard-quicklink-desc">Alle Mitarbeiterdaten verwalten und neue hinzufügen.</div>
-                    </div>
-                    <span className="dashboard-quicklink-arrow">
-                        <FiArrowRight />
-                    </span>
-                </div>
-                <div
-                    className="dashboard-quicklink-card"
-                    tabIndex={0}
-                    style={{ cursor: "pointer" }}
-                    onClick={() => navigate("/qualifications")}
-                >
-                    <span className="dashboard-quicklink-icon">
-                        <FiAward />
-                    </span>
-                    <div className="dashboard-quicklink-content">
-                        <div className="dashboard-quicklink-title">Qualifikationsverwaltung</div>
-                        <div className="dashboard-quicklink-desc">Qualifikationen einsehen und bearbeiten.</div>
-                    </div>
-                    <span className="dashboard-quicklink-arrow">
-                        <FiArrowRight />
-                    </span>
-                </div>
+                
+                <h2 className="dashboard-subtitle">Schnellzugriff</h2>
+                <DashboardQuicklinks />
             </div>
         </div>
     );
