@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { FiArrowRight, FiAward, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualificationApi } from "../hooks/useQualificationApi";
@@ -8,19 +7,6 @@ import type { QualificationType } from "../types/QualificationType";
 import "./Dashboard.css";
 import { DashboardCards } from "../components/dashboard/DashboardCards";
 import { DashboardQuicklinks } from "../components/dashboard/DashboardQuicklinks";
-
-interface Employee {
-  id: string;
-  vorname: string;
-  nachname: string;
-  ort: string;
-  qualifikationen: string[];
-}
-
-interface Qualification {
-  id: string;
-  name: string;
-}
 
 const Dashboard = () => {
     const navigate = useNavigate();
@@ -52,7 +38,7 @@ const Dashboard = () => {
     }, [fetchQualifications]);
 
     return (
-        <>
+        <div>
             <div className="dashboard-content-wrapper">
                 <h1 className="dashboard-title">Dashboard</h1>
                 <DashboardCards 
