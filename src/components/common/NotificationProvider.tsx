@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { FiAlertCircle, FiCheckCircle, FiInfo, FiX } from "react-icons/fi";
-import "./NotificationProvider.css";
+import "../../styles/NotificationProvider.css";
 
 type NotificationTone = "success" | "error" | "info";
 

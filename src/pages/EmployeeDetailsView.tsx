@@ -3,7 +3,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import type { Employee } from "../types/Employee";
 import { EMPLOYEE_ROUTES } from "../features/employees/routes";
-import "./EmployeeDetailsView.css";
+import "../styles/EmployeeDetailsView.css";
 
 // Reine Presentational-Komponente fuer die Mitarbeiterdetails.
 interface EmployeeDetailsViewProps {

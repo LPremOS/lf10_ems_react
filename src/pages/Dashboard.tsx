@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQualificationApi } from "../hooks/useQualificationApi";
 import type { QualificationType } from "../types/QualificationType";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
-import "./Dashboard.css";
+import "../styles/Dashboard.css";
 import { DashboardCards } from "../components/Dashboard/DashboardCards";
 import { DashboardQuicklinks } from "../components/Dashboard/DashboardQuicklinks";
 

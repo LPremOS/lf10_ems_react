@@ -86,8 +86,7 @@ export function QualificationsOverview() {
                 <div className="filter-section">
                     <h3>Filter</h3>
                     <div className="position-relative">
-                        <i className="bi bi-search position-absolute" 
-                        style={{ left: '10px', top: '50%', transform: 'translateY(15%)', color: '#6c757d' }}></i>
+                        <i className="bi bi-search position-absolute filter-icon"/>
                         <div className="filter-group">
                             <label>Bezeichnung</label>
                             <input

@@ -25,7 +25,7 @@ import {
     type SortDirection,
     type SortKey,
 } from "../features/employees/overviewModel";
-import "./EmployeeOverview.css";
+import "../styles/EmployeeOverview.css";
 
 // Layout-/Paging-Konstanten fuer die Uebersicht.
 const DEFAULT_ITEMS_PER_PAGE = 8;

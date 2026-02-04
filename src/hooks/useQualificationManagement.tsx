@@ -3,6 +3,7 @@ import { useQualificationApi } from "./useQualificationApi";
 import type { QualificationType } from "../types/QualificationType";
 import { useEmployeeManagement } from "./useEmployeeManagement";
 import { useEmployeeApi } from "./useEmployeeApi";
+import type { ButtonProps } from "react-bootstrap";
 
 // Ergebnis fuer "Qualifikation sicherstellen" (existiert bereits oder wurde neu erstellt).
 export type EnsureQualificationResult =
@@ -11,7 +12,6 @@ export type EnsureQualificationResult =
 
 // Modal-Betriebsarten in der Qualifikationsverwaltung.
 type ModalMode = "add" | "edit" | "delete";
-type SaveVariant = "primary" | "danger";
 
 // Hook kapselt die komplette Qualifikations-UI-Logik inkl. Mitarbeiter-Beziehungen.
 export function useQualificationManagement() {
@@ -27,7 +27,7 @@ export function useQualificationManagement() {
     const { deleteQualificationFromEmployee } = useEmployeeApi();
 
     const [qualifications, setQualifications] = useState<QualificationType[]>([]);
-    const [saveVariant, setSaveVariant] = useState<SaveVariant>("primary");
+    const [saveVariant, setSaveVariant] = useState<ButtonProps["variant"]>("primary");
     const [showModal, setShowModal] = useState(false);
     const [skillInput, setSkillInput] = useState("");
     const [modalMode, setModalMode] = useState<ModalMode>("add");
@@ -109,9 +109,11 @@ export function useQualificationManagement() {
                 );
 
                 // Entfernt die Qualifikation bei allen betroffenen Mitarbeitern.
-                for(const employee of affectedEmployees) {
-                    await deleteQualificationFromEmployee(employee.id, selectedQualification.id);
-                }
+                await Promise.allSettled(
+                    affectedEmployees.map(e => 
+                        deleteQualificationFromEmployee(e.id, selectedQualification.id)
+                    )
+                );
             }
 
             const result = await deleteQualification(selectedQualification.id);

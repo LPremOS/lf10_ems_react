@@ -13,7 +13,7 @@ import {
     createEmployeeFormData,
     validateEmployeeForm,
 } from "../features/employees/formModel";
-import "./EmployeeForm.css";
+import "../styles/EmployeeForm.css";
 
 export type { EmployeeFormData } from "../features/employees/formModel";
 type EmployeeFieldName = EmployeeFormFieldName;
