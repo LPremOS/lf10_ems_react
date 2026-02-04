@@ -12,6 +12,10 @@
     overflow-y: auto;
 }
 
+.app-layout__content--no-scroll {
+    overflow-y: hidden;
+}
+
 .mobile-menu-button {
     display: none;
 }

@@ -104,8 +104,8 @@
 
 .field input:focus,
 .select:focus {
-  border-color: #8bb3ff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #2eb82e;
+  box-shadow: 0 0 0 3px rgba(46, 184, 46, 0.2);
 }
 
 .field input.input-invalid {
@@ -220,8 +220,8 @@
 }
 
 .add-inline-field input:focus {
-  border-color: #8bb3ff;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  border-color: #2eb82e;
+  box-shadow: 0 0 0 3px rgba(46, 184, 46, 0.2);
 }
 
 .actions {
