@@ -323,12 +323,36 @@ export function useEmployeeApi() {
         }
     }, [getAuthHeaders, runNoContentRequest]);
 
+    const deleteQualificationFromEmployee = useCallback(async (eId: string, qId:number): Promise<MutationResult<null>> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const authResult = getAuthHeaders();
+            if (!authResult.ok) {
+                return { success: false, error: authResult.error };
+            }
+
+            return await runNoContentRequest(
+                `${EMPLOYEES_URL}/${eId}/qualifications/${qId}`,
+                {
+                    method: "DELETE",
+                    headers: authResult.headers,
+                },
+                "Löschen der Qualifikation eines Mitarbeiters",
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, [getAuthHeaders, runNoContentRequest]);
+
     return {
         fetchEmployees,
         fetchEmployeeById,
         addEmployee,
         updateEmployee,
         deleteEmployee,
+        deleteQualificationFromEmployee,
         loading,
         error,
     };

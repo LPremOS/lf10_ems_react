@@ -231,7 +231,7 @@
   padding-top: 4px;
 }
 
-.btn-secondary {
+.employee-form-page .btn-secondary {
   height: 44px;
   padding: 0 18px;
   border-radius: 10px;
@@ -243,11 +243,11 @@
   transition: background-color 0.15s;
 }
 
-.btn-secondary:hover {
+.employee-form-page .btn-secondary:hover {
   background: #f3f4f6;
 }
 
-.btn-primary {
+.employee-form-page .btn-primary {
   height: 44px;
   padding: 0 18px;
   border-radius: 10px;
@@ -259,12 +259,12 @@
   transition: filter 0.15s;
 }
 
-.btn-primary:hover {
+.employee-form-page .btn-primary:hover {
   filter: brightness(0.95);
 }
 
-.btn-secondary:disabled,
-.btn-primary:disabled {
+.employee-form-page .btn-secondary:disabled,
+.employee-form-page .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
