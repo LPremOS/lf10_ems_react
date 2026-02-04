@@ -37,7 +37,7 @@ export function AppLayout() {
                     onClick={toggleMobile}
                     aria-label={isMobileOpen ? "Menü schließen" : "Menü öffnen"}
                 >
-                    ☰
+                    {isMobileOpen ? "✕" : "☰"}
                 </button>
 
                 {/* Backdrop nur wenn Drawer offen */}

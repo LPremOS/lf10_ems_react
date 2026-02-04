@@ -51,7 +51,7 @@ export function Sidebar({
             <div className="sidebar__footer">
                 <button
                     type="button"
-                    className="sidebar__link sidebar__logout"
+                    className="sidebar__logout"
                     onClick={() => {
                         onCloseMobile();
                         onLogout();
