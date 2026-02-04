@@ -31,7 +31,13 @@ body {
     border-color: #28a428 !important;
 }
 
-
+@media (max-width: 900px) {
+    .modal-footer .btn.btn-primary,
+    .modal-footer .btn.btn-danger,
+    .modal-footer .btn.btn-secondary {
+        width: 100% !important;
+    }
+}
 
 .container,
 .container-fluid {
@@ -64,3 +70,24 @@ body {
 .loginContainer label {
     margin-bottom: 0.2rem;
 }
+
+/* Qualifikationen */
+
+.qualificationList {
+    max-height: 365px;
+    overflow-y: scroll;
+    overflow-x: hidden;   
+}
+
+.employee-overview .filter-icon {
+    left: 10px;
+    top: 54%;
+    transform: 'translateY(15%)';
+    color: #6c757d;
+}
+
+@media (max-width: 768px) {
+    .employee-overview .filter-icon {
+        top: 51%;
+    }
+} 

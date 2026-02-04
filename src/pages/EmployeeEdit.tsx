@@ -1,125 +1,76 @@
-import { Layout } from "../components/Layout";
-import { EmployeeForm } from "../components/EmployeeForm";
+import { EmployeeForm } from "./EmployeeForm";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
+import { useEmployeeRecord } from "../hooks/useEmployeeRecord";
+import { useNotification } from "../components/common/NotificationProvider";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
+import { toEmployeeFormData, type EmployeeFormData } from "../features/employees/formModel";
 
-interface EmployeeFormData {
-  vorname: string;
-  nachname: string;
-  email: string;
-  telefonnummer: string;
-  abteilung: string;
-  position: string;
-  standort: string;
-  qualifikationen: string[];
-}
-
-// Mock-Daten (gleiche wie in EmployeeDetails.tsx)
-const mockEmployees = [
-  {
-    id: '1',
-    vorname: 'Anna',
-    nachname: 'Müller',
-    email: 'anna.mueller@hitecgmbh.de',
-    telefonnummer: '+49 176 12345671',
-    abteilung: 'IT',
-    position: 'Projektmanagerin',
-    standort: 'Berlin',
-    qualifikationen: ['Projektmanagement', 'Softwareentwicklung', 'Agile Methoden', 'Teamleitung']
-  },
-  {
-    id: '2',
-    vorname: 'Max',
-    nachname: 'Schmidt',
-    email: 'max.schmidt@hitecgmbh.de',
-    telefonnummer: '+49 176 12345672',
-    abteilung: 'Datenanalyse',
-    position: 'Data Scientist',
-    standort: 'München',
-    qualifikationen: ['Datenanalyse', 'Cloud Computing', 'Python', 'Machine Learning']
-  },
-  {
-    id: '3',
-    vorname: 'Lena',
-    nachname: 'Meier',
-    email: 'lena.meier@hitecgmbh.de',
-    telefonnummer: '+49 176 12345673',
-    abteilung: 'Vertrieb',
-    position: 'Vertriebsleiterin',
-    standort: 'Hamburg',
-    qualifikationen: ['Projektmanagement', 'Marketing', 'Vertrieb', 'Kundenkommunikation']
-  },
-  {
-    id: '4',
-    vorname: 'Paul',
-    nachname: 'Wagner',
-    email: 'paul.wagner@hitecgmbh.de',
-    telefonnummer: '+49 176 12345674',
-    abteilung: 'Entwicklung',
-    position: 'Senior Developer',
-    standort: 'Frankfurt',
-    qualifikationen: ['Softwareentwicklung', 'Cloud Computing', 'DevOps', 'Microservices']
-  },
-  {
-    id: '5',
-    vorname: 'Sophie',
-    nachname: 'Schneider',
-    email: 'sophie.schneider@hitecgmbh.de',
-    telefonnummer: '+49 176 12345675',
-    abteilung: 'Business Intelligence',
-    position: 'BI Analyst',
-    standort: 'Köln',
-    qualifikationen: ['Datenanalyse', 'Vertrieb', 'SQL', 'Tableau']
-  }
-];
-
+// Seite "Mitarbeiter bearbeiten". Laedt vorhandene Daten und uebergibt sie ans Formular.
 export function EmployeeEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { fetchEmployeeById, loading } = useEmployeeApi();
-  const [employee, setEmployee] = useState<EmployeeFormData | null>(null);
+  const { fetchEmployeeById, updateEmployee, loading, error } = useEmployeeApi();
+  const employeeRecord = useEmployeeRecord(id, fetchEmployeeById);
+  const employee = useMemo(
+    () => (employeeRecord ? toEmployeeFormData(employeeRecord) : null),
+    [employeeRecord],
+  );
+  const { notify } = useNotification();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadEmployee = async () => {
-      if (id) {
-        const data = await fetchEmployeeById(id);
+  const handleSubmit = async (data: EmployeeFormData) => {
+    // Ohne ID oder bei laufender Anfrage darf nicht gespeichert werden.
+    if (!id || isSubmitting) {
+      return;
+    }
 
-        if (!data) {
-          const mockEmployee = mockEmployees.find(emp => emp.id === id);
-          setEmployee(mockEmployee || null);
-        } else {
-          setEmployee(data);
-        }
+    setIsSubmitting(true);
+    setApiError(null);
+    try {
+      const result = await updateEmployee(id, data);
+      if (result.success) {
+        // Nach erfolgreichem Speichern zur Detailansicht springen.
+        notify({
+          tone: "success",
+          title: "Änderungen gespeichert",
+        });
+        navigate(EMPLOYEE_ROUTES.details(id));
+        return;
       }
-    };
-    loadEmployee();
-  }, [id, fetchEmployeeById]);
 
-  const handleSubmit = (data: EmployeeFormData) => {
-    // Später: API-Call zum Backend
-    console.log('Mitarbeiter aktualisiert:', { id, ...data });
-
-    // Temporär: Erfolgsmeldung und zurück zur Detailansicht
-    alert('Änderungen wurden erfolgreich gespeichert!');
-    navigate(`/employees/${id}`);
+      // Fehler im Formular anzeigen und als Notification ausgeben.
+      setApiError(result.error);
+      notify({
+        tone: "error",
+        title: "Änderungen konnten nicht gespeichert werden",
+        message: result.error,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <Layout>
-        <div style={{ padding: '2rem' }}>Laden...</div>
-      </Layout>
-    );
+  if (loading && !employee) {
+    // Initialer Ladezustand solange der Datensatz noch nicht da ist.
+    return <div>Lädt Mitarbeiterdaten...</div>;
+  }
+
+  if (!loading && !employee) {
+    // Nach abgeschlossenem Laden, aber ohne Datensatz -> Fehlermeldung.
+    return <div className="text-danger">Fehler: {error ?? "Mitarbeiter nicht gefunden."}</div>;
   }
 
   return (
-    <Layout>
-      <EmployeeForm
-        initialData={employee}
-        onSubmit={handleSubmit}
-        isEdit={true}
-      />
-    </Layout>
+    <EmployeeForm
+      initialData={employee}
+      onSubmit={handleSubmit}
+      isEdit
+      isSubmitting={isSubmitting}
+      apiError={apiError}
+      submitLabel="Änderungen speichern"
+    />
   );
 }

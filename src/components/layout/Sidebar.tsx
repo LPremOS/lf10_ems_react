@@ -1,7 +1,7 @@
 import {NavLink} from "react-router-dom";
 import {FiLogOut, FiMenu} from "react-icons/fi";
-import {sidebarItems, type SidebarItem} from "./sidebarItems";
-import "./Sidebar.css";
+import {SidebarItems, type SidebarItem} from "./SidebarItems";
+import "../../styles/Sidebar.css";
 
 type SidebarProps = {
     items?: SidebarItem[];
@@ -9,18 +9,23 @@ type SidebarProps = {
     onToggle: () => void;
     onLogout: () => void;
     appName?: string;
+
+    isMobileOpen: boolean;
+    onCloseMobile: () => void;
 };
 
 export function Sidebar({
-    items = sidebarItems,
+    items = SidebarItems,
     isCollapsed,
     onToggle,
     onLogout,
     appName = "HiTec EMS",
+    isMobileOpen,
+    onCloseMobile,
 }: SidebarProps) {
     return (
-        <aside className={`sidebar ${isCollapsed ? "is-collapsed" : ""}`}>
-            <div className="sidebar__header">
+        <aside className={`sidebar ${isCollapsed ? "is-collapsed" : ""} ${isMobileOpen ? "is-mobile-open" : ""}`}>
+        <div className="sidebar__header">
                 <button type="button" className="sidebar__toggle" onClick={onToggle}>
                     <FiMenu />
                 </button>
@@ -32,9 +37,10 @@ export function Sidebar({
                     <NavLink
                         key={item.key}
                         to={item.to}
-                        end
+                        end={item.end !== false} // Verwende item.end, default ist true wenn nicht angegeben
                         className={({isActive}) => `sidebar__link ${isActive ? "is-active" : ""}`}
                         title={isCollapsed ? item.label : undefined}
+                        onClick={onCloseMobile}
                     >
                         <span className="sidebar__icon" aria-hidden="true">{item.icon}</span>
                         {!isCollapsed && <span className="sidebar__label">{item.label}</span>}
@@ -45,9 +51,11 @@ export function Sidebar({
             <div className="sidebar__footer">
                 <button
                     type="button"
-                    className="sidebar__link sidebar__logout"
-                    onClick={onLogout}
-                    title={isCollapsed ? "Abmelden" : undefined}
+                    className="sidebar__logout"
+                    onClick={() => {
+                        onCloseMobile();
+                        onLogout();
+                    }}
                 >
                     <span className="sidebar__icon" aria-hidden="true">
                         <FiLogOut />

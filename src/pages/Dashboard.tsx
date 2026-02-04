@@ -1,55 +1,47 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useQualificationApi } from "../hooks/useQualificationApi";
+import type { QualificationType } from "../types/QualificationType";
+import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
+import "../styles/Dashboard.css";
+import { DashboardCards } from "../components/Dashboard/DashboardCards";
+import { DashboardQuicklinks } from "../components/Dashboard/DashboardQuicklinks";
 
-import "./Dashboard.css";
-
+// Startseite mit Kennzahlen und Navigation in die Verwaltungsbereiche.
 const Dashboard = () => {
-    const navigate = useNavigate();
+    // Mitarbeiterzahl kommt aus dem zentralen Mitarbeiter-Hook.
+    const { employees, loading: loadingEmployees } = useEmployeeManagement();
+    const { fetchQualifications, loading: loadingQualifications } = useQualificationApi();
+    const [qualifications, setQualifications] = useState<QualificationType[]>([]);
+
+    useEffect(() => {
+        // Qualifikationen werden fuer die zweite Dashboard-Kennzahl geladen.
+        const loadQualifications = async () => {
+            const data = await fetchQualifications();
+            if (Array.isArray(data)) {
+                setQualifications(data);
+            }
+        };
+
+        loadQualifications();
+    }, [fetchQualifications]);
+
     return (
-        <>
+        <div>
             <div className="dashboard-content-wrapper">
                 <h1 className="dashboard-title">Dashboard</h1>
-                <div className="dashboard-cards-row">
-                    <div className="dashboard-card">
-                        <div className="dashboard-card-value"> TEMP 100</div>
-                        <div className="dashboard-card-label">Mitarbeiter insgesamt</div>
-                            <span className="dashboard-employees-icon">[icon]</span>
-                    </div>
-                    <div className="dashboard-card">
-                        <div className="dashboard-card-value">TEMP 5</div>
-                        <div className="dashboard-card-label">Qualifikationen insgesamt</div>
-                            <span className="dashboard-qualifications-icon">[icon]</span>
-                    </div>
-                </div>
+                <DashboardCards 
+                  // Anzahl direkt aus den geladenen Listen.
+                  employeesCount={employees.length}
+                  qualificationsCount={qualifications.length}
+                  loadingEmployees={loadingEmployees}
+                  loadingQualifications={loadingQualifications}
+                />
+
+                
                 <h2 className="dashboard-subtitle">Schnellzugriff</h2>
-                <div className="dashboard-quicklinks-row">
-                    <div
-                        className="dashboard-quicklink-card"
-                        tabIndex={0}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/employees')}
-                    >
-                        <div>
-                            <div className="dashboard-quicklink-title">Mitarbeiterverwaltung</div>
-                            <div className="dashboard-quicklink-desc">Alle Mitarbeiterdaten verwalten und neue hinzufügen.</div>
-                        </div>
-                        <span className="dashboard-quicklink-arrow">→</span>
-                    </div>
-                    <div
-                        className="dashboard-quicklink-card"
-                        tabIndex={0}
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => navigate('/qualifications')}
-                    >
-                        <div>
-                            <div className="dashboard-quicklink-title">Qualifikationsverwaltung</div>
-                            <div className="dashboard-quicklink-desc">Qualifikationen einsehen und bearbeiten.</div>
-                        </div>
-                        <span className="dashboard-quicklink-arrow">→</span>
-                    </div>
-                </div>
+                <DashboardQuicklinks />
             </div>
-        </>
+        </div>
     );
 };
 
