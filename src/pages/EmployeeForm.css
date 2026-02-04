@@ -207,6 +207,11 @@
   align-items: center;
 }
 
+.add-row .select {
+  width: 100%;
+  min-width: 0;
+}
+
 .btn-add {
   height: 38px;
   padding: 0 12px;

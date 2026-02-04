@@ -104,10 +104,10 @@ export function QualificationsOverview() {
                 <div className="filter-section">
                     <h3>Verfügbare Qualifikationen</h3>
                     <Row>
-                        <Col xs={10}>
+                        <Col xs={8} sm={10}>
                             <h6>Bezeichnung der Qualifikation</h6>
                         </Col>
-                        <Col xs={2} className="text-end">
+                        <Col xs={4} sm={2} className="text-end">
                             <h6>Aktionen</h6>
                         </Col>
                     </Row>

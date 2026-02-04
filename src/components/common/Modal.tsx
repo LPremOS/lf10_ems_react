@@ -1,4 +1,4 @@
-import { Button, Modal } from "react-bootstrap";
+import { Button, Modal, type ButtonProps } from "react-bootstrap";
 
 type CustomModalProps = {
     show : boolean;
@@ -8,7 +8,7 @@ type CustomModalProps = {
     children: React.ReactNode;
     saveButtonText?: string;
     cancelButtonText?:string;
-    saveVariant?: "primary" | "secondary" | "danger" | "success";
+    saveVariant?: ButtonProps["variant"];
     isBusy?: boolean;
     saveDisabled?: boolean;
     cancelDisabled?: boolean;
