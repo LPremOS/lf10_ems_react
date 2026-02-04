@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualificationApi } from "../hooks/useQualificationApi";
 import type { Employee as EmployeeType } from "../types/Employee";
 import type { QualificationType } from "../types/QualificationType";
 import "./Dashboard.css";
-import { DashboardCards } from "../components/dashboard/DashboardCards";
-import { DashboardQuicklinks } from "../components/dashboard/DashboardQuicklinks";
+import { DashboardCards } from "../components/Dashboard/DashboardCards";
+import { DashboardQuicklinks } from "../components/Dashboard/DashboardQuicklinks";
 
 const Dashboard = () => {
-    const navigate = useNavigate();
     const { fetchEmployees, loading: loadingEmployees } = useEmployeeApi();
     const { fetchQualifications, loading: loadingQualifications } = useQualificationApi();
     const [employees, setEmployees] = useState<EmployeeType[]>([]);
