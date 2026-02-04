@@ -3,7 +3,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 import { Sidebar } from "./Sidebar";
 import { NotificationProvider } from "../common/NotificationProvider";
-import "./AppLayout.css";
+import "../../styles/AppLayout.css";
 
 export function AppLayout() {
     const [isCollapsed, setIsCollapsed] = useState(false);

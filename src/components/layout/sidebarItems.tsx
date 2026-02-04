@@ -9,7 +9,7 @@ export type SidebarItem = {
     end?: boolean; // Optional: ob die Route exact matching verwenden soll
 };
 
-export const sidebarItems: SidebarItem[] = [
+export const SidebarItems: SidebarItem[] = [
     {key: "dashboard", label: "Dashboard", to: "/dashboard", icon: <FiHome/>, end: true},
     {key: "employees", label: "Mitarbeiter", to: "/employees", icon: <FiUsers/>, end: false}, // Bleibt aktiv für /employees/*
     {key: "qualifications", label: "Qualifikationen", to: "/qualifications", icon: <FiAward/>, end: false}, // Bleibt aktiv für /qualifications/*

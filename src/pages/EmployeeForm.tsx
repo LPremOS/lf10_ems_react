@@ -6,7 +6,7 @@ import { CustomModal } from "../components/common/Modal";
 import { useQualificationManagement } from "../hooks/useQualificationManagement";
 import { useNotification } from "../components/common/NotificationProvider";
 import type { Employee } from "../types/Employee";
-import "./EmployeeForm.css";
+import "../styles/EmployeeForm.css";
 
 export type EmployeeFormData = Omit<Employee, "id">;
 type EmployeeFieldName = Exclude<keyof EmployeeFormData, "qualifikationen">;

@@ -8,7 +8,8 @@ import { useNotification } from "../components/common/NotificationProvider";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useDebounce } from "../hooks/useDebounce";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
-import "./EmployeeOverview.css";
+import "../styles/EmployeeOverview.css";
+import { EmployeeTableRow } from "../components/employee/EmployeeTableRow";
 
 const DEFAULT_ITEMS_PER_PAGE = 8;
 const MIN_ITEMS_PER_PAGE = 1;
@@ -414,6 +415,18 @@ export function EmployeeOverview() {
         });
     };
 
+    const handleViewEmployee = (id: string) => {
+        navigate(`/employees/${id}`);
+    };
+
+    const handleEditEmployee = (id: string) => {
+        navigate(`/employees/${id}/edit`);
+    };
+
+    const handleDeleteEmployee = (id: string, vorname: string, nachname: string) => {
+        openDeleteModal(id, vorname, nachname);
+    };
+
     const handleDelete = async () => {
         if (!employeeToDelete) {
             return;
@@ -582,49 +595,7 @@ export function EmployeeOverview() {
                                 </tr>
                             ) : (
                                 paginatedEmployees.map((employee) => (
-                                    <tr key={employee.id}>
-                                        <td>{employee.vorname}</td>
-                                        <td>{employee.nachname}</td>
-                                        <td>{employee.standort}</td>
-                                        <td>
-                                            <div className="qualifications">
-                                                {employee.qualifikationen.length > 0 ? (
-                                                    employee.qualifikationen.map((qualification) => (
-                                                        <span key={qualification} className="qualification-badge">
-                                                            {qualification}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-muted">Keine Qualifikationen</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="action-btn"
-                                                    onClick={() => navigate(`/employees/${employee.id}`)}
-                                                    title="Mitarbeiter ansehen"
-                                                >
-                                                    <AiOutlineEye />
-                                                </button>
-                                                <button
-                                                    className="action-btn"
-                                                    onClick={() => navigate(`/employees/${employee.id}/edit`)}
-                                                    title="Mitarbeiter bearbeiten"
-                                                >
-                                                    <AiOutlineEdit />
-                                                </button>
-                                                <button
-                                                    className="action-btn action-btn-delete"
-                                                    title="Mitarbeiter löschen"
-                                                    onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
-                                                >
-                                                    <AiOutlineDelete />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <EmployeeTableRow employee={employee} onView={handleViewEmployee} onEdit={handleEditEmployee} onDelete={handleDeleteEmployee} />
                                 ))
                             )}
                         </tbody>

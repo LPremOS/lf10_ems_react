@@ -3,7 +3,7 @@ import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualificationApi } from "../hooks/useQualificationApi";
 import type { Employee as EmployeeType } from "../types/Employee";
 import type { QualificationType } from "../types/QualificationType";
-import "./Dashboard.css";
+import "../styles/Dashboard.css";
 import { DashboardCards } from "../components/Dashboard/DashboardCards";
 import { DashboardQuicklinks } from "../components/Dashboard/DashboardQuicklinks";
 

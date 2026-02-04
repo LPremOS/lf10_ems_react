@@ -1,13 +1,10 @@
 import { Container } from "react-bootstrap";
-import { InputField } from "../components/common/InputField";
 import { SubmitButton } from "../components/common/SubmitButton";
-import { useState, type FormEvent } from "react";
+import { type FormEvent } from "react";
 import { useAuth } from "react-oidc-context";
 
 export function Login() {
     const auth = useAuth()
-    const [username, setUsername] = useState("");
-    const [password, setPassword] = useState("");
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         auth.signinRedirect();
@@ -24,7 +21,7 @@ export function Login() {
                     <p className="text-danger mt-3">Authentifizierung war nicht erfolgreich!<br/>Bitte versuchen Sie es erneut.</p> 
                     }
             
-                <InputField
+                {/* <InputField
                     type="text"
                     id="UsernameInput"
                     placeholder="Ihre E-Mail-Adresse"
@@ -40,7 +37,7 @@ export function Login() {
                     showToggle={true}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    />
+                    /> */}
                 <SubmitButton text="Anmelden"/>
             </form>
         </Container>

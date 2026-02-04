@@ -2,7 +2,7 @@ import { AiOutlineEdit } from "react-icons/ai";
 import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import type { Employee } from "../types/Employee";
-import "./EmployeeDetailsView.css";
+import "../styles/EmployeeDetailsView.css";
 
 interface EmployeeDetailsViewProps {
     employee: Employee | null;

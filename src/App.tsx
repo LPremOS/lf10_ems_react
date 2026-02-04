@@ -1,4 +1,4 @@
-import "./App.css";
+import "./styles/App.css";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "react-oidc-context";
 import { Loader } from "./components/common/Loader.tsx";

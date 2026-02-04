@@ -1,7 +1,7 @@
 import {NavLink} from "react-router-dom";
 import {FiLogOut, FiMenu} from "react-icons/fi";
-import {sidebarItems, type SidebarItem} from "./sidebarItems";
-import "./Sidebar.css";
+import {SidebarItems, type SidebarItem} from "./SidebarItems";
+import "../../styles/Sidebar.css";
 
 type SidebarProps = {
     items?: SidebarItem[];
@@ -15,7 +15,7 @@ type SidebarProps = {
 };
 
 export function Sidebar({
-    items = sidebarItems,
+    items = SidebarItems,
     isCollapsed,
     onToggle,
     onLogout,
