@@ -94,15 +94,26 @@
 }
 
 .sidebar__logout {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+
     border: none;
-    background: none;
+    background: transparent;
     color: inherit;
     cursor: pointer;
+
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .sidebar__logout:hover {
-    background: rgba(248, 113, 113, 0.15);
-    color: #fecdd3;
+    background: rgba(220, 38, 38, 0.12);
+    color: #dc2626;
 }
 
 /* ===== MOBILE DRAWER MODE ===== */
@@ -138,5 +149,9 @@
     .sidebar__link.is-active {
         background: #16a34a;
         color: #ffffff;
+    }
+    .sidebar__logout:hover {
+        background: rgba(220, 38, 38, 0.15);
+        color: #dc2626;
     }
 }
