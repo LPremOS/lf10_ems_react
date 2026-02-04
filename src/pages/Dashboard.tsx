@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { FiArrowRight, FiAward, FiUsers } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
-import { useQualifiactionApi } from "../hooks/useQualificationApi";
+import { useQualificationApi } from "../hooks/useQualificationApi";
+import type { Employee as EmployeeType } from "../types/Employee";
+import type { QualificationType } from "../types/QualificationType";
 import "./Dashboard.css";
 import { DashboardCards } from "../components/dashboard/DashboardCards";
 import { DashboardQuicklinks } from "../components/dashboard/DashboardQuicklinks";
@@ -22,26 +25,32 @@ interface Qualification {
 const Dashboard = () => {
     const navigate = useNavigate();
     const { fetchEmployees, loading: loadingEmployees } = useEmployeeApi();
-    const { fetchQualifications, loading: loadingQualifications } = useQualifiactionApi();
-    const [employees, setEmployees] = useState<Employee[]>([]);
-    const [qualifications, setQualifications] = useState<Qualification[]>([]);
+    const { fetchQualifications, loading: loadingQualifications } = useQualificationApi();
+    const [employees, setEmployees] = useState<EmployeeType[]>([]);
+    const [qualifications, setQualifications] = useState<QualificationType[]>([]);
 
     useEffect(() => {
         const loadEmployees = async () => {
             const data = await fetchEmployees();
-            if (Array.isArray(data)) setEmployees(data);
+            if (Array.isArray(data)) {
+                setEmployees(data);
+            }
         };
-        loadEmployees();        
-    }, []);
+
+        loadEmployees();
+    }, [fetchEmployees]);
 
     useEffect(() => {
         const loadQualifications = async () => {
             const data = await fetchQualifications();
-            if (Array.isArray(data)) setQualifications(data);
+            if (Array.isArray(data)) {
+                setQualifications(data);
+            }
         };
+
         loadQualifications();
-    }, []);
-    
+    }, [fetchQualifications]);
+
     return (
         <>
             <div className="dashboard-content-wrapper">
@@ -57,7 +66,7 @@ const Dashboard = () => {
                 <h2 className="dashboard-subtitle">Schnellzugriff</h2>
                 <DashboardQuicklinks />
             </div>
-        </>
+        </div>
     );
 };
 

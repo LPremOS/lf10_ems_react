@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Button, Modal } from "react-bootstrap";
 
 type CustomModalProps = {
@@ -9,6 +8,10 @@ type CustomModalProps = {
     children: React.ReactNode;
     saveButtonText?: string;
     cancelButtonText?:string;
+    saveVariant?: "primary" | "secondary" | "danger" | "success";
+    isBusy?: boolean;
+    saveDisabled?: boolean;
+    cancelDisabled?: boolean;
 }
 
 export function CustomModal({
@@ -18,20 +21,24 @@ export function CustomModal({
         title,
         children,
         saveButtonText = 'Speichern',
-        cancelButtonText = 'Abbrechen'
+        cancelButtonText = 'Abbrechen',
+        saveVariant = "primary",
+        isBusy = false,
+        saveDisabled = false,
+        cancelDisabled = false,
     } : CustomModalProps) {
             return(
                 <>
-                <Modal show={show} onHide={onClose} centered>
-                    <Modal.Header closeButton>
+                <Modal show={show} onHide={isBusy ? undefined : onClose} centered backdrop={isBusy ? "static" : true} keyboard={!isBusy}>
+                    <Modal.Header closeButton={!isBusy}>
                         <Modal.Title>{title}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>{children}</Modal.Body>
                     <Modal.Footer>
-                        <Button variant="secondary" onClick={onClose}>
+                        <Button variant="secondary" onClick={onClose} disabled={isBusy || cancelDisabled}>
                             {cancelButtonText}
                         </Button>
-                        <Button variant="primary" onClick={onSave}>
+                        <Button variant={saveVariant} onClick={onSave} disabled={isBusy || saveDisabled}>
                             {saveButtonText}
                         </Button>
                     </Modal.Footer>

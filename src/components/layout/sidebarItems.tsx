@@ -6,10 +6,11 @@ export type SidebarItem = {
     label: string;
     to: string;
     icon: ReactNode;
+    end?: boolean; // Optional: ob die Route exact matching verwenden soll
 };
 
 export const sidebarItems: SidebarItem[] = [
-    {key: "dashboard", label: "Dashboard", to: "/dashboard", icon: <FiHome/>},
-    {key: "employees", label: "Mitarbeiter", to: "/employees", icon: <FiUsers/>},
-    {key: "qualifications", label: "Qualifikationen", to: "/qualifications", icon: <FiAward/>},
+    {key: "dashboard", label: "Dashboard", to: "/dashboard", icon: <FiHome/>, end: true},
+    {key: "employees", label: "Mitarbeiter", to: "/employees", icon: <FiUsers/>, end: false}, // Bleibt aktiv für /employees/*
+    {key: "qualifications", label: "Qualifikationen", to: "/qualifications", icon: <FiAward/>, end: false}, // Bleibt aktiv für /qualifications/*
 ];

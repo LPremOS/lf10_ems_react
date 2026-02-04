@@ -21,7 +21,7 @@ export function Login() {
                 <h2 className="fw-bold">Willkommen zurück</h2>
                 {!auth.error ? 
                     <p className="mb-4 text-black-50">Melden Sie sich an, um fortzufahren.</p>:
-                    <p className="text-danger mt-3">Fehler: {auth.error.message}</p> 
+                    <p className="text-danger mt-3">Authentifizierung war nicht erfolgreich!<br/>Bitte versuchen Sie es erneut.</p> 
                     }
             
                 <InputField
