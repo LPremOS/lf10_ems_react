@@ -1,6 +1,6 @@
 import {NavLink} from "react-router-dom";
 import {FiLogOut, FiMenu} from "react-icons/fi";
-import {SidebarItems, type SidebarItem} from "./SidebarItems";
+import {SidebarItems, type SidebarItem} from "./sidebarItems";
 import "../../styles/Sidebar.css";
 
 type SidebarProps = {
