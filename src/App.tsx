@@ -11,6 +11,7 @@ import { EmployeeEdit } from "./pages/EmployeeEdit.tsx";
 import { EmployeeOverview } from "./pages/EmployeeOverview.tsx";
 import { Login } from "./pages/Login.tsx";
 import { QualificationsOverview } from "./pages/QualificationsOverview.tsx";
+import { EMPLOYEE_ROUTES } from "./features/employees/routes";
 
 function App() {
     const auth = useAuth();
@@ -30,10 +31,10 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route element={<AppLayout />}>
                         <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/employees" element={<EmployeeOverview />} />
-                        <Route path="/employees/new" element={<EmployeeAdd />} />
-                        <Route path="/employees/:id" element={<EmployeeDetails />} />
-                        <Route path="/employees/:id/edit" element={<EmployeeEdit />} />
+                        <Route path={EMPLOYEE_ROUTES.overview} element={<EmployeeOverview />} />
+                        <Route path={EMPLOYEE_ROUTES.create} element={<EmployeeAdd />} />
+                        <Route path={EMPLOYEE_ROUTES.detailsPattern} element={<EmployeeDetails />} />
+                        <Route path={EMPLOYEE_ROUTES.editPattern} element={<EmployeeEdit />} />
                         <Route path="/qualifications" element={<QualificationsOverview />} />
                     </Route>
                 </>

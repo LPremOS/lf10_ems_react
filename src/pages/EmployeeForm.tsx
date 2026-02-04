@@ -5,12 +5,18 @@ import { FiPlus, FiTrash2 } from "react-icons/fi";
 import { CustomModal } from "../components/common/Modal";
 import { useQualificationManagement } from "../hooks/useQualificationManagement";
 import { useNotification } from "../components/common/NotificationProvider";
-import type { Employee } from "../types/Employee";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
+import {
+    type EmployeeFormData,
+    type EmployeeFormFieldName,
+    areEmployeeFormDataEqual,
+    createEmployeeFormData,
+    validateEmployeeForm,
+} from "../features/employees/formModel";
 import "./EmployeeForm.css";
 
-export type EmployeeFormData = Omit<Employee, "id">;
-type EmployeeFieldName = Exclude<keyof EmployeeFormData, "qualifikationen">;
-type FormErrors = Partial<Record<EmployeeFieldName, string>>;
+export type { EmployeeFormData } from "../features/employees/formModel";
+type EmployeeFieldName = EmployeeFormFieldName;
 
 interface EmployeeFormProps {
     initialData?: EmployeeFormData | null;
@@ -21,8 +27,6 @@ interface EmployeeFormProps {
     submitLabel?: string;
 }
 
-const POSTCODE_PATTERN = /^[0-9]{5}$/;
-const PHONE_PATTERN = /^[0-9+()\-/\s]{6,20}$/;
 const CREATE_QUALIFICATION_OPTION = "__create_new__";
 const MIN_FORM_SCALE = 0.78;
 
@@ -36,31 +40,6 @@ function getQualificationOptionLabel(skill: string): string {
         return trimmedSkill;
     }
     return `${trimmedSkill.slice(0, 37)}...`;
-}
-
-function createInitialFormData(initialData?: EmployeeFormData | null): EmployeeFormData {
-    return {
-        vorname: initialData?.vorname ?? "",
-        nachname: initialData?.nachname ?? "",
-        telefonnummer: initialData?.telefonnummer ?? "",
-        standort: initialData?.standort ?? "",
-        street: initialData?.street ?? "",
-        postcode: initialData?.postcode ?? "",
-        qualifikationen: initialData?.qualifikationen ?? [],
-    };
-}
-
-function validateForm(data: EmployeeFormData): FormErrors {
-    const errors: FormErrors = {};
-
-    if (!data.vorname.trim()) errors.vorname = "Bitte geben Sie einen Vornamen ein.";
-    if (!data.nachname.trim()) errors.nachname = "Bitte geben Sie einen Nachnamen ein.";
-    if (!data.standort.trim()) errors.standort = "Bitte geben Sie einen Ort ein.";
-    if (!data.street.trim()) errors.street = "Bitte geben Sie eine Straße ein.";
-    if (!POSTCODE_PATTERN.test(data.postcode.trim())) errors.postcode = "Bitte geben Sie eine 5-stellige PLZ ein.";
-    if (!PHONE_PATTERN.test(data.telefonnummer.trim())) errors.telefonnummer = "Bitte geben Sie eine gültige Telefonnummer ein.";
-
-    return errors;
 }
 
 export function EmployeeForm({
@@ -80,7 +59,7 @@ export function EmployeeForm({
     } = useQualificationManagement();
     const { notify } = useNotification();
 
-    const initialFormData = useMemo(() => createInitialFormData(initialData), [initialData]);
+    const initialFormData = useMemo(() => createEmployeeFormData(initialData), [initialData]);
     const [formData, setFormData] = useState<EmployeeFormData>(initialFormData);
     const [selectedQualification, setSelectedQualification] = useState<string>("");
     const [newQualificationName, setNewQualificationName] = useState("");
@@ -169,20 +148,9 @@ export function EmployeeForm({
         return availableQualifications.filter((qualification) => !selected.has(qualification));
     }, [formData.qualifikationen, availableQualifications]);
 
-    const formErrors = useMemo(() => validateForm(formData), [formData]);
+    const formErrors = useMemo(() => validateEmployeeForm(formData), [formData]);
 
-    const isDirty = useMemo(() => {
-        return (
-            formData.vorname !== initialFormData.vorname ||
-            formData.nachname !== initialFormData.nachname ||
-            formData.telefonnummer !== initialFormData.telefonnummer ||
-            formData.standort !== initialFormData.standort ||
-            formData.street !== initialFormData.street ||
-            formData.postcode !== initialFormData.postcode ||
-            formData.qualifikationen.length !== initialFormData.qualifikationen.length ||
-            formData.qualifikationen.some((qualification, index) => qualification !== initialFormData.qualifikationen[index])
-        );
-    }, [formData, initialFormData]);
+    const isDirty = useMemo(() => !areEmployeeFormDataEqual(formData, initialFormData), [formData, initialFormData]);
 
     const hasValidationErrors = Object.keys(formErrors).length > 0;
     const isBusy = isSubmitting || isCreatingQualification;
@@ -297,7 +265,7 @@ export function EmployeeForm({
     const handleCancelClick = () => {
         if (isBusy) return;
         if (!isDirty) {
-            navigate("/employees");
+            navigate(EMPLOYEE_ROUTES.overview);
             return;
         }
         setShowCancelConfirm(true);
@@ -305,7 +273,7 @@ export function EmployeeForm({
 
     const confirmCancel = () => {
         setShowCancelConfirm(false);
-        navigate("/employees");
+        navigate(EMPLOYEE_ROUTES.overview);
     };
 
     return (

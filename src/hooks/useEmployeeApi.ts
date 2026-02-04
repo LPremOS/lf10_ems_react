@@ -1,75 +1,23 @@
 import { useAuth } from "react-oidc-context";
 import { useCallback, useState } from "react";
 import type { Employee } from "../types/Employee";
-
-const EMPLOYEES_URL = "http://localhost:8089/employees";
-const QUALIFICATIONS_URL = "http://localhost:8089/qualifications";
-
-interface QualificationApiItem {
-    id: number;
-    skill: string;
-}
-
-interface EmployeeApiPayload {
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    city?: string;
-    street?: string;
-    postcode?: string;
-    skillSet?: number[];
-}
-
-interface EmployeeApiResponse {
-    id: number;
-    firstName: string;
-    lastName: string;
-    phone: string;
-    city: string;
-    street: string;
-    postcode: string;
-    skillSet?: QualificationApiItem[];
-}
+import {
+    EMPLOYEES_URL,
+    QUALIFICATIONS_URL,
+    type EmployeeApiResponse,
+    type QualificationApiItem,
+    fromEmployeeApiResponse,
+    toEmployeeApiPayload,
+} from "../features/employees/apiModel";
 
 type AuthHeaderResult =
     | { ok: true; headers: Record<string, string> }
     | { ok: false; error: string };
 
-export type MutationResult<T> =
+export type EmployeeMutationResult<T> =
     | { success: true; data: T }
     | { success: false; error: string };
-
-function toApiFormat(employee: Partial<Employee>, qualificationBySkill: Map<string, number>): EmployeeApiPayload {
-    const payload: EmployeeApiPayload = {};
-
-    if (employee.vorname !== undefined) payload.firstName = employee.vorname;
-    if (employee.nachname !== undefined) payload.lastName = employee.nachname;
-    if (employee.telefonnummer !== undefined) payload.phone = employee.telefonnummer;
-    if (employee.standort !== undefined) payload.city = employee.standort;
-    if (employee.street !== undefined) payload.street = employee.street;
-    if (employee.postcode !== undefined) payload.postcode = employee.postcode;
-
-    if (employee.qualifikationen !== undefined) {
-        payload.skillSet = employee.qualifikationen
-            .map((skill) => qualificationBySkill.get(skill))
-            .filter((id): id is number => typeof id === "number");
-    }
-
-    return payload;
-}
-
-function fromApiFormat(apiEmployee: EmployeeApiResponse): Employee {
-    return {
-        id: String(apiEmployee.id),
-        vorname: apiEmployee.firstName ?? "",
-        nachname: apiEmployee.lastName ?? "",
-        telefonnummer: apiEmployee.phone ?? "",
-        standort: apiEmployee.city ?? "",
-        street: apiEmployee.street ?? "",
-        postcode: apiEmployee.postcode ?? "",
-        qualifikationen: (apiEmployee.skillSet ?? []).map((qualification) => qualification.skill),
-    };
-}
+export type MutationResult<T> = EmployeeMutationResult<T>;
 
 function getStatusMessage(status: number, actionLabel: string): string {
     if (status === 400) return `${actionLabel} fehlgeschlagen. Bitte prüfen Sie die Eingaben.`;
@@ -107,11 +55,22 @@ export function useEmployeeApi() {
         };
     }, [auth.isAuthenticated, auth.user?.access_token]);
 
+    const withLoading = useCallback(async <T,>(operation: () => Promise<T>): Promise<T> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            return await operation();
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     const runJsonRequest = useCallback(async <T,>(
         url: string,
         init: RequestInit,
         actionLabel: string,
-    ): Promise<MutationResult<T>> => {
+    ): Promise<EmployeeMutationResult<T>> => {
         try {
             const response = await fetch(url, init);
             if (!response.ok) {
@@ -133,7 +92,7 @@ export function useEmployeeApi() {
         url: string,
         init: RequestInit,
         actionLabel: string,
-    ): Promise<MutationResult<null>> => {
+    ): Promise<EmployeeMutationResult<null>> => {
         try {
             const response = await fetch(url, init);
             if (!response.ok) {
@@ -150,7 +109,7 @@ export function useEmployeeApi() {
         }
     }, []);
 
-    const fetchQualificationLookup = useCallback(async (headers: Record<string, string>): Promise<MutationResult<Map<string, number>>> => {
+    const fetchQualificationLookup = useCallback(async (headers: Record<string, string>): Promise<EmployeeMutationResult<Map<string, number>>> => {
         const result = await runJsonRequest<QualificationApiItem[]>(
             QUALIFICATIONS_URL,
             { headers },
@@ -167,11 +126,8 @@ export function useEmployeeApi() {
         };
     }, [runJsonRequest]);
 
-    const fetchEmployees = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const fetchEmployees = useCallback(async (): Promise<Employee[]> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return [];
@@ -187,17 +143,12 @@ export function useEmployeeApi() {
                 return [];
             }
 
-            return result.data.map(fromApiFormat);
-        } finally {
-            setLoading(false);
-        }
-    }, [getAuthHeaders, runJsonRequest]);
+            return result.data.map(fromEmployeeApiResponse);
+        });
+    }, [getAuthHeaders, runJsonRequest, withLoading]);
 
-    const fetchEmployeeById = useCallback(async (id: string) => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const fetchEmployeeById = useCallback(async (id: string): Promise<Employee | null> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return null;
@@ -213,17 +164,12 @@ export function useEmployeeApi() {
                 return null;
             }
 
-            return fromApiFormat(result.data);
-        } finally {
-            setLoading(false);
-        }
-    }, [getAuthHeaders, runJsonRequest]);
+            return fromEmployeeApiResponse(result.data);
+        });
+    }, [getAuthHeaders, runJsonRequest, withLoading]);
 
-    const addEmployee = useCallback(async (employee: Omit<Employee, "id">): Promise<MutationResult<Employee>> => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const addEmployee = useCallback(async (employee: Omit<Employee, "id">): Promise<EmployeeMutationResult<Employee>> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return { success: false, error: authResult.error };
@@ -238,7 +184,7 @@ export function useEmployeeApi() {
                 qualificationLookup = lookupResult.data;
             }
 
-            const payload = toApiFormat(employee, qualificationLookup);
+            const payload = toEmployeeApiPayload(employee, qualificationLookup);
             const result = await runJsonRequest<EmployeeApiResponse>(
                 EMPLOYEES_URL,
                 {
@@ -253,17 +199,12 @@ export function useEmployeeApi() {
                 return result;
             }
 
-            return { success: true, data: fromApiFormat(result.data) };
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest]);
+            return { success: true, data: fromEmployeeApiResponse(result.data) };
+        });
+    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest, withLoading]);
 
-    const updateEmployee = useCallback(async (id: string, employee: Partial<Employee>): Promise<MutationResult<Employee>> => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const updateEmployee = useCallback(async (id: string, employee: Partial<Employee>): Promise<EmployeeMutationResult<Employee>> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return { success: false, error: authResult.error };
@@ -279,7 +220,7 @@ export function useEmployeeApi() {
                 qualificationLookup = lookupResult.data;
             }
 
-            const payload = toApiFormat(employee, qualificationLookup);
+            const payload = toEmployeeApiPayload(employee, qualificationLookup);
             const result = await runJsonRequest<EmployeeApiResponse>(
                 `${EMPLOYEES_URL}/${id}`,
                 {
@@ -294,17 +235,12 @@ export function useEmployeeApi() {
                 return result;
             }
 
-            return { success: true, data: fromApiFormat(result.data) };
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest]);
+            return { success: true, data: fromEmployeeApiResponse(result.data) };
+        });
+    }, [fetchQualificationLookup, getAuthHeaders, runJsonRequest, withLoading]);
 
-    const deleteEmployee = useCallback(async (id: string): Promise<MutationResult<null>> => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const deleteEmployee = useCallback(async (id: string): Promise<EmployeeMutationResult<null>> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return { success: false, error: authResult.error };
@@ -318,16 +254,11 @@ export function useEmployeeApi() {
                 },
                 "Löschen des Mitarbeiters",
             );
-        } finally {
-            setLoading(false);
-        }
-    }, [getAuthHeaders, runNoContentRequest]);
+        });
+    }, [getAuthHeaders, runNoContentRequest, withLoading]);
 
-    const deleteQualificationFromEmployee = useCallback(async (eId: string, qId:number): Promise<MutationResult<null>> => {
-        setLoading(true);
-        setError(null);
-
-        try {
+    const deleteQualificationFromEmployee = useCallback(async (eId: string, qId: number): Promise<EmployeeMutationResult<null>> => {
+        return withLoading(async () => {
             const authResult = getAuthHeaders();
             if (!authResult.ok) {
                 return { success: false, error: authResult.error };
@@ -341,10 +272,8 @@ export function useEmployeeApi() {
                 },
                 "Löschen der Qualifikation eines Mitarbeiters",
             );
-        } finally {
-            setLoading(false);
-        }
-    }, [getAuthHeaders, runNoContentRequest]);
+        });
+    }, [getAuthHeaders, runNoContentRequest, withLoading]);
 
     return {
         fetchEmployees,

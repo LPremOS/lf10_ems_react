@@ -1,28 +1,15 @@
 import { useEffect, useState } from "react";
-import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useQualificationApi } from "../hooks/useQualificationApi";
-import type { Employee as EmployeeType } from "../types/Employee";
 import type { QualificationType } from "../types/QualificationType";
+import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
 import "./Dashboard.css";
 import { DashboardCards } from "../components/Dashboard/DashboardCards";
 import { DashboardQuicklinks } from "../components/Dashboard/DashboardQuicklinks";
 
 const Dashboard = () => {
-    const { fetchEmployees, loading: loadingEmployees } = useEmployeeApi();
+    const { employees, loading: loadingEmployees } = useEmployeeManagement();
     const { fetchQualifications, loading: loadingQualifications } = useQualificationApi();
-    const [employees, setEmployees] = useState<EmployeeType[]>([]);
     const [qualifications, setQualifications] = useState<QualificationType[]>([]);
-
-    useEffect(() => {
-        const loadEmployees = async () => {
-            const data = await fetchEmployees();
-            if (Array.isArray(data)) {
-                setEmployees(data);
-            }
-        };
-
-        loadEmployees();
-    }, [fetchEmployees]);
 
     useEffect(() => {
         const loadQualifications = async () => {

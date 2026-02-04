@@ -8,6 +8,23 @@ import { useNotification } from "../components/common/NotificationProvider";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useDebounce } from "../hooks/useDebounce";
 import { useEmployeeManagement } from "../hooks/useEmployeeManagement";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
+import type { Employee } from "../types/Employee";
+import {
+    DEFAULT_FILTERS,
+    FILTER_LABELS,
+    OVERVIEW_STATE_KEY,
+    SORT_OPTIONS,
+    getVisiblePageNumbers,
+    isSortKey,
+    loadPersistedOverviewState,
+    normalizeFilterValue,
+    type EmployeeFilters,
+    type FilterKey,
+    type PersistedOverviewState,
+    type SortDirection,
+    type SortKey,
+} from "../features/employees/overviewModel";
 import "./EmployeeOverview.css";
 
 const DEFAULT_ITEMS_PER_PAGE = 8;
@@ -16,126 +33,6 @@ const DESKTOP_ROW_FALLBACK_HEIGHT = 52;
 const MOBILE_ITEMS_PER_PAGE = 7;
 const MAX_VISIBLE_PAGE_BUTTONS = 5;
 const FILTER_DEBOUNCE_MS = 300;
-const OVERVIEW_STATE_KEY = "employeeOverview.uiState.v1";
-
-type EmployeeFilters = {
-    vorname: string;
-    nachname: string;
-    standort: string;
-    qualifikation: string;
-};
-
-type FilterKey = keyof EmployeeFilters;
-type SortKey = "vorname" | "nachname" | "standort";
-type SortDirection = "asc" | "desc";
-
-type PersistedOverviewState = {
-    filters: EmployeeFilters;
-    sortKey: SortKey | null;
-    sortDirection: SortDirection;
-    currentPage: number;
-};
-
-const DEFAULT_FILTERS: EmployeeFilters = {
-    vorname: "",
-    nachname: "",
-    standort: "",
-    qualifikation: "",
-};
-
-const FILTER_LABELS: Record<FilterKey, string> = {
-    vorname: "Vorname",
-    nachname: "Nachname",
-    standort: "Ort",
-    qualifikation: "Qualifikation",
-};
-
-const SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
-    { key: "vorname", label: "Vorname" },
-    { key: "nachname", label: "Nachname" },
-    { key: "standort", label: "Ort" },
-];
-
-function normalizeFilterValue(value: string): string {
-    return value.trim().toLowerCase();
-}
-
-function isSortKey(value: string): value is SortKey {
-    return value === "vorname" || value === "nachname" || value === "standort";
-}
-
-function loadPersistedOverviewState(): PersistedOverviewState | null {
-    if (typeof window === "undefined") {
-        return null;
-    }
-
-    try {
-        const storedValue = window.localStorage.getItem(OVERVIEW_STATE_KEY);
-        if (!storedValue) {
-            return null;
-        }
-
-        const parsed = JSON.parse(storedValue) as Partial<PersistedOverviewState>;
-        const filters = parsed.filters;
-
-        const hasValidFilters =
-            typeof filters?.vorname === "string" &&
-            typeof filters.nachname === "string" &&
-            typeof filters.standort === "string" &&
-            typeof filters.qualifikation === "string";
-
-        const hasValidSortKey =
-            parsed.sortKey === null ||
-            parsed.sortKey === "vorname" ||
-            parsed.sortKey === "nachname" ||
-            parsed.sortKey === "standort";
-
-        const hasValidSortDirection =
-            parsed.sortDirection === "asc" || parsed.sortDirection === "desc";
-
-        const hasValidPage =
-            Number.isInteger(parsed.currentPage) && (parsed.currentPage ?? 0) > 0;
-
-        if (!hasValidFilters || !hasValidSortKey || !hasValidSortDirection || !hasValidPage) {
-            return null;
-        }
-
-        return {
-            filters: {
-                vorname: filters.vorname,
-                nachname: filters.nachname,
-                standort: filters.standort,
-                qualifikation: filters.qualifikation,
-            },
-            sortKey: parsed.sortKey ?? null,
-            sortDirection: parsed.sortDirection as SortDirection,
-            currentPage: parsed.currentPage as number,
-        };
-    } catch {
-        return null;
-    }
-}
-
-function getVisiblePageNumbers(
-    totalPages: number,
-    currentPage: number,
-    maxVisibleButtons: number,
-): number[] {
-    if (totalPages <= maxVisibleButtons) {
-        return Array.from({ length: totalPages }, (_, index) => index + 1);
-    }
-
-    const halfWindow = Math.floor(maxVisibleButtons / 2);
-    let start = Math.max(1, currentPage - halfWindow);
-    let end = start + maxVisibleButtons - 1;
-
-    if (end > totalPages) {
-        end = totalPages;
-        start = end - maxVisibleButtons + 1;
-    }
-
-    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
-}
 
 export function EmployeeOverview() {
     const navigate = useNavigate();
@@ -442,6 +339,44 @@ export function EmployeeOverview() {
         }
     };
 
+    const renderQualificationBadges = (qualifications: string[]) => {
+        if (qualifications.length === 0) {
+            return <span className="text-muted">Keine Qualifikationen</span>;
+        }
+
+        return qualifications.map((qualification) => (
+            <span key={qualification} className="qualification-badge">
+                {qualification}
+            </span>
+        ));
+    };
+
+    const renderActionButtons = (employee: Employee, isMobile = false) => (
+        <div className={`action-buttons${isMobile ? " action-buttons-mobile" : ""}`}>
+            <button
+                className="action-btn"
+                onClick={() => navigate(EMPLOYEE_ROUTES.details(employee.id))}
+                title="Mitarbeiter ansehen"
+            >
+                <AiOutlineEye />
+            </button>
+            <button
+                className="action-btn"
+                onClick={() => navigate(EMPLOYEE_ROUTES.edit(employee.id))}
+                title="Mitarbeiter bearbeiten"
+            >
+                <AiOutlineEdit />
+            </button>
+            <button
+                className="action-btn action-btn-delete"
+                title="Mitarbeiter löschen"
+                onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
+            >
+                <AiOutlineDelete />
+            </button>
+        </div>
+    );
+
     if (loading) {
         return <Loader />;
     }
@@ -466,7 +401,7 @@ export function EmployeeOverview() {
                 <h1>Mitarbeiterübersicht</h1>
                 <button
                     className="btn-new-employee"
-                    onClick={() => navigate("/employees/new")}
+                    onClick={() => navigate(EMPLOYEE_ROUTES.create)}
                 >
                     Neuen Mitarbeiter anlegen
                 </button>
@@ -587,43 +522,9 @@ export function EmployeeOverview() {
                                         <td>{employee.nachname}</td>
                                         <td>{employee.standort}</td>
                                         <td>
-                                            <div className="qualifications">
-                                                {employee.qualifikationen.length > 0 ? (
-                                                    employee.qualifikationen.map((qualification) => (
-                                                        <span key={qualification} className="qualification-badge">
-                                                            {qualification}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-muted">Keine Qualifikationen</span>
-                                                )}
-                                            </div>
+                                            <div className="qualifications">{renderQualificationBadges(employee.qualifikationen)}</div>
                                         </td>
-                                        <td>
-                                            <div className="action-buttons">
-                                                <button
-                                                    className="action-btn"
-                                                    onClick={() => navigate(`/employees/${employee.id}`)}
-                                                    title="Mitarbeiter ansehen"
-                                                >
-                                                    <AiOutlineEye />
-                                                </button>
-                                                <button
-                                                    className="action-btn"
-                                                    onClick={() => navigate(`/employees/${employee.id}/edit`)}
-                                                    title="Mitarbeiter bearbeiten"
-                                                >
-                                                    <AiOutlineEdit />
-                                                </button>
-                                                <button
-                                                    className="action-btn action-btn-delete"
-                                                    title="Mitarbeiter löschen"
-                                                    onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
-                                                >
-                                                    <AiOutlineDelete />
-                                                </button>
-                                            </div>
-                                        </td>
+                                        <td>{renderActionButtons(employee)}</td>
                                     </tr>
                                 ))
                             )}
@@ -671,39 +572,9 @@ export function EmployeeOverview() {
                                     <span className="employee-card-location">{employee.standort}</span>
                                 </div>
                                 <div className="employee-card-qualifications">
-                                    {employee.qualifikationen.length > 0 ? (
-                                        employee.qualifikationen.map((qualification) => (
-                                            <span key={qualification} className="qualification-badge">
-                                                {qualification}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-muted">Keine Qualifikationen</span>
-                                    )}
+                                    {renderQualificationBadges(employee.qualifikationen)}
                                 </div>
-                                <div className="action-buttons action-buttons-mobile">
-                                    <button
-                                        className="action-btn"
-                                        onClick={() => navigate(`/employees/${employee.id}`)}
-                                        title="Mitarbeiter ansehen"
-                                    >
-                                        <AiOutlineEye />
-                                    </button>
-                                    <button
-                                        className="action-btn"
-                                        onClick={() => navigate(`/employees/${employee.id}/edit`)}
-                                        title="Mitarbeiter bearbeiten"
-                                    >
-                                        <AiOutlineEdit />
-                                    </button>
-                                    <button
-                                        className="action-btn action-btn-delete"
-                                        title="Mitarbeiter löschen"
-                                        onClick={() => openDeleteModal(employee.id, employee.vorname, employee.nachname)}
-                                    >
-                                        <AiOutlineDelete />
-                                    </button>
-                                </div>
+                                {renderActionButtons(employee, true)}
                             </article>
                         ))
                     )}

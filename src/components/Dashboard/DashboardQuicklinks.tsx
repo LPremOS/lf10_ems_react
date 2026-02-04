@@ -1,6 +1,7 @@
 import React from "react";
 import { FiArrowRight, FiUsers, FiAward } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import { EMPLOYEE_ROUTES } from "../../features/employees/routes";
 
 export const DashboardQuicklinks: React.FC = () => {
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export const DashboardQuicklinks: React.FC = () => {
         className="dashboard-quicklink-card"
         tabIndex={0}
         style={{ cursor: 'pointer' }}
-        onClick={() => navigate('/employees')}
+        onClick={() => navigate(EMPLOYEE_ROUTES.overview)}
       >
         <span className="dashboard-quicklink-icon">
           <FiUsers />

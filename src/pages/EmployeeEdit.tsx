@@ -1,27 +1,24 @@
-import { EmployeeForm, type EmployeeFormData } from "./EmployeeForm";
+import { EmployeeForm } from "./EmployeeForm";
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
+import { useEmployeeRecord } from "../hooks/useEmployeeRecord";
 import { useNotification } from "../components/common/NotificationProvider";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
+import { toEmployeeFormData, type EmployeeFormData } from "../features/employees/formModel";
 
 export function EmployeeEdit() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { fetchEmployeeById, updateEmployee, loading, error } = useEmployeeApi();
+  const employeeRecord = useEmployeeRecord(id, fetchEmployeeById);
+  const employee = useMemo(
+    () => (employeeRecord ? toEmployeeFormData(employeeRecord) : null),
+    [employeeRecord],
+  );
   const { notify } = useNotification();
-  const [employee, setEmployee] = useState<EmployeeFormData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadEmployee = async () => {
-      if (id) {
-        const data = await fetchEmployeeById(id);
-        setEmployee(data);
-      }
-    };
-    loadEmployee();
-  }, [fetchEmployeeById, id]);
 
   const handleSubmit = async (data: EmployeeFormData) => {
     if (!id || isSubmitting) {
@@ -37,7 +34,7 @@ export function EmployeeEdit() {
           tone: "success",
           title: "Änderungen gespeichert",
         });
-        navigate(`/employees/${id}`);
+        navigate(EMPLOYEE_ROUTES.details(id));
         return;
       }
 

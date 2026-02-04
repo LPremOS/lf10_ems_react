@@ -1,5 +1,6 @@
 import {FiAward, FiHome, FiUsers} from "react-icons/fi";
 import type {ReactNode} from "react";
+import { EMPLOYEE_ROUTES } from "../../features/employees/routes";
 
 export type SidebarItem = {
     key: "dashboard" | "employees" | "qualifications";
@@ -11,6 +12,6 @@ export type SidebarItem = {
 
 export const sidebarItems: SidebarItem[] = [
     {key: "dashboard", label: "Dashboard", to: "/dashboard", icon: <FiHome/>, end: true},
-    {key: "employees", label: "Mitarbeiter", to: "/employees", icon: <FiUsers/>, end: false}, // Bleibt aktiv für /employees/*
+    {key: "employees", label: "Mitarbeiter", to: EMPLOYEE_ROUTES.overview, icon: <FiUsers/>, end: false}, // Bleibt aktiv für /employees/*
     {key: "qualifications", label: "Qualifikationen", to: "/qualifications", icon: <FiAward/>, end: false}, // Bleibt aktiv für /qualifications/*
 ];

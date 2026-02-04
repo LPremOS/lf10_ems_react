@@ -1,8 +1,10 @@
-import { EmployeeForm, type EmployeeFormData } from "./EmployeeForm";
+import { EmployeeForm } from "./EmployeeForm";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useEmployeeApi } from "../hooks/useEmployeeApi";
 import { useNotification } from "../components/common/NotificationProvider";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
+import type { EmployeeFormData } from "../features/employees/formModel";
 
 export function EmployeeAdd() {
   const navigate = useNavigate();
@@ -26,7 +28,7 @@ export function EmployeeAdd() {
           tone: "success",
           title: "Mitarbeiter erfolgreich angelegt",
         });
-        navigate("/employees");
+        navigate(EMPLOYEE_ROUTES.overview);
         return;
       }
 

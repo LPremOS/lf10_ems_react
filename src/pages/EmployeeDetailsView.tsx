@@ -2,6 +2,7 @@ import { AiOutlineEdit } from "react-icons/ai";
 import { FiArrowLeft } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import type { Employee } from "../types/Employee";
+import { EMPLOYEE_ROUTES } from "../features/employees/routes";
 import "./EmployeeDetailsView.css";
 
 interface EmployeeDetailsViewProps {
@@ -62,13 +63,13 @@ export function EmployeeDetailsView({
                 <div className="details-actions">
                     <button
                         className="btn-edit"
-                        onClick={() => navigate(`/employees/${employee.id}/edit`)}
+                        onClick={() => navigate(EMPLOYEE_ROUTES.edit(employee.id))}
                     >
                         <AiOutlineEdit /> Bearbeiten
                     </button>
                     <button
                         className="btn-back"
-                        onClick={() => navigate("/employees")}
+                        onClick={() => navigate(EMPLOYEE_ROUTES.overview)}
                     >
                         <FiArrowLeft /> Zurück zur Übersicht
                     </button>
