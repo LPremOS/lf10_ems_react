@@ -37,7 +37,7 @@ export function Sidebar({
                     <NavLink
                         key={item.key}
                         to={item.to}
-                        end
+                        end={item.end !== false} // Verwende item.end, default ist true wenn nicht angegeben
                         className={({isActive}) => `sidebar__link ${isActive ? "is-active" : ""}`}
                         title={isCollapsed ? item.label : undefined}
                         onClick={onCloseMobile}
